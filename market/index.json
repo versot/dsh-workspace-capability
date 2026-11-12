@@ -1,0 +1,72 @@
+{
+  "format": 1,
+  "title": {
+    "en": "Workspace Skill Scope",
+    "zh": "工作区 Skill 作用域"
+  },
+  "description": {
+    "en": "Per-workspace skill visibility for DeepSeek Harness.",
+    "zh": "按工作区控制会话可见的 skill。"
+  },
+  "metadata": {
+    "categories": {
+      "skills": {
+        "title": {
+          "en": "Skills",
+          "zh": "技能"
+        }
+      }
+    },
+    "labels": {
+      "skills": {
+        "title": {
+          "en": "Skills",
+          "zh": "技能"
+        }
+      }
+    }
+  },
+  "plugins": [
+    {
+      "name": "dsh-workspace-skill-scope",
+      "title": {
+        "en": "Workspace Skill Scope",
+        "zh": "工作区 Skill 作用域"
+      },
+      "description": {
+        "en": "One .dsh/skill-scope.yml per workspace decides which skills a session can see, with a checklist panel in the session menu. Applies to every preset, including sessions created before the plugin was installed.",
+        "zh": "每个工作区一份 .dsh/skill-scope.yml 决定会话能看到哪些 skill，会话行菜单里有勾选面板；对所有 preset 生效，含插件安装前创建的老会话。"
+      },
+      "author": "versot",
+      "metadata": {
+        "category": "skills",
+        "labels": [
+          "skills"
+        ],
+        "keywords": [
+          "skill",
+          "workspace",
+          "skill-scope",
+          "checklist"
+        ]
+      },
+      "versions": [
+        {
+          "version": "1.0.0",
+          "publishTimestamp": 1794460000,
+          "source": {
+            "type": "npm"
+          },
+          "engines": {
+            "dsh": ">=0.2.1-rc.5"
+          }
+        }
+      ],
+      "repository": {
+        "type": "git",
+        "url": "https://github.com/versot/dsh-workspace-skill-scope"
+      },
+      "homepage": "https://github.com/versot/dsh-workspace-skill-scope#readme"
+    }
+  ]
+}

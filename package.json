@@ -1,0 +1,67 @@
+{
+  "name": "dsh-workspace-skill-scope",
+  "version": "1.0.0",
+  "description": "Per-workspace skill visibility for DeepSeek Harness: one .dsh/skill-scope.yml plus a checklist panel in the session menu.",
+  "license": "MIT",
+  "author": "versot",
+  "homepage": "https://github.com/versot/dsh-workspace-skill-scope#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/versot/dsh-workspace-skill-scope.git"
+  },
+  "bugs": {
+    "url": "https://github.com/versot/dsh-workspace-skill-scope/issues"
+  },
+  "keywords": [
+    "dsh-plugin",
+    "deepseek-harness",
+    "skill",
+    "workspace",
+    "cordis"
+  ],
+  "type": "module",
+  "exports": {
+    ".": "./index.js",
+    "./provider": "./provider.js",
+    "./client": "./client.js",
+    "./catalog": "./catalog.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "index.js",
+    "provider.js",
+    "catalog.js",
+    "client.js",
+    "filter.js",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg"
+  ],
+  "scripts": {
+    "test": "node scripts/check.mjs",
+    "pack": "npm pack"
+  },
+  "dependencies": {
+    "yaml": "^2.9.0"
+  },
+  "engines": {
+    "dsh": ">=0.2.1-rc.5"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-layout",
+        "@deepseek-ai/dsh-client-ui-workspace"
+      ]
+    }
+  }
+}
