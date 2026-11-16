@@ -2,17 +2,23 @@
 
 包名 `dsh-workspace-skill-scope`，`engines.dsh >=0.2.2-rc.3`、`engines.node >=22.12.0`。
 
-## npm
+## npm（仅本地人工发布）
+
+本仓库不使用 GitHub Actions 自动发布 npm。发布者在本地登录并完成检查后手动发布：
 
 ```bash
 npm login
 npm test
-npm publish --access public
+npm pack --dry-run
+npm publish --access public --provenance
 ```
 
-或交给 CI：在仓库 Settings → Secrets 加 `NPM_TOKEN`（Automation token），然后将 `<version>` 替换为
-`package.json` 当前版本并执行 `git tag v<version> && git push origin v<version>`（`.github/workflows/publish.yml` 会跑测试并发布）。
-两条路只选一条，否则第二次会因版本已存在失败。
+确认 npm 发布成功后，才创建并推送对应的版本标签，避免标签触发或暗示尚未完成的发布：
+
+```bash
+git tag v<version>
+git push origin v<version>
+```
 
 ## GitHub（免 npm）
 
