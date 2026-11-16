@@ -24,7 +24,7 @@ check(pkg.dsh?.bundle?.patch === "./cordis.patch.yml", "dsh.bundle.patch must po
 check(typeof pkg.dsh?.client?.platform === "string", "dsh.client.platform is missing");
 check(typeof pkg.exports?.["./client"] === "string", "exports[./client] is missing");
 
-for (const file of ["index.js", "provider.js", "catalog.js", "client.js", "filter.js", "cordis.patch.yml"]) {
+for (const file of ["index.js", "provider.js", "catalog.js", "client.js", "filter.js", "agent-scopes.js", "cordis.patch.yml"]) {
   check(existsSync(file), `${file} is missing`);
   check(Array.isArray(pkg.files) && pkg.files.includes(file), `${file} is not in package.json "files"`);
 }
@@ -41,15 +41,26 @@ check(inserted[0]?.name === pkg.name, `patch row name is "${inserted[0]?.name}",
 const clientSource = readFileSync("client.js", "utf8");
 check(clientSource.includes(`id: '${pkg.name}'`), "client.js __ModuleLoader__ id does not match the package name");
 
-// The market index must describe this exact package and version.
+// The market index must describe this package. It may intentionally lag behind
+// package.json while the next version is still unreleased.
 const index = JSON.parse(readFileSync("market/index.json", "utf8"));
 check(index.format === 1, "market index format must be 1");
 const entry = index.plugins?.find((plugin) => plugin.name === pkg.name);
 check(entry !== undefined, "market index has no entry for this package");
-check(entry?.versions?.some((version) => version.version === pkg.version), "market index lacks this version");
+check(Array.isArray(entry?.versions) && entry.versions.length > 0, "market index has no released versions");
+for (const version of entry?.versions ?? []) {
+  check(Number.isSafeInteger(version.publishTimestamp) && version.publishTimestamp > 0,
+    `market version ${version.version} has an invalid publishTimestamp`);
+  check(version.source?.type === "npm" || version.source?.type === "git",
+    `market version ${version.version} has an invalid source`);
+  if (version.source?.type === "git") {
+    check(/^https:\/\//.test(version.source.url ?? ""), `market version ${version.version} has no HTTPS git URL`);
+    check(/^[0-9a-f]{40}$/.test(version.source.commit ?? ""), `market version ${version.version} has no fixed 40-character commit`);
+  }
+}
 
 // Importing the modules is the cheapest way to catch a broken import graph.
-for (const module of ["../index.js", "../provider.js", "../catalog.js", "../filter.js"]) {
+for (const module of ["../index.js", "../provider.js", "../catalog.js", "../filter.js", "../agent-scopes.js"]) {
   try {
     await import(module);
   } catch (error) {

@@ -26,6 +26,7 @@ import {
   normalizeConfig,
 } from "./catalog.js";
 import { installSkillFilter, isSkillFilterActive } from "./filter.js";
+import { AgentSkillScopes, installSkilledSubagentTool } from "./agent-scopes.js";
 
 export const name = "workspace-skill-scope-host";
 
@@ -42,12 +43,21 @@ const POLICY_HEADER = [
  * @param {object} ctx - host context carrying `webServer`.
  */
 export function apply(ctx) {
+  const agentScopes = new AgentSkillScopes(ctx);
+
   // Old Sessions keep the preset they were created with, so the only way to make
   // the workspace policy reach them is the shared `skills` service, not the
   // preset. Fail-open: an empty catalog is worse than an unfiltered one.
   ctx.inject(["skills"], (skillsCtx) => {
-    const restore = installSkillFilter(skillsCtx, skillsCtx.skills);
+    const restore = installSkillFilter(skillsCtx, skillsCtx.skills, agentScopes);
     skillsCtx.effect(() => () => restore(), "workspace-skill-scope: shared catalog filter");
+  });
+
+  ctx.inject(["tools", "subagents", "skills", "workingDirectory", "sessions"], (toolCtx) => {
+    toolCtx.effect(
+      () => installSkilledSubagentTool(toolCtx, agentScopes),
+      "workspace-skill-scope: skilled subagent tool",
+    );
   });
 
   // Lazy: a headless or minimal composition has no webServer, and a top-level
@@ -160,7 +170,15 @@ async function savePolicy(ctx, req, res) {
 
   // A save must be visible on the next model request, not on the poller's tick.
   invalidateWorkspaceProviders();
-  sendJson(res, 200, withFilterState(await collectWorkspaceCatalog(workspace, ctx)));
+  const catalog = withFilterState(await collectWorkspaceCatalog(workspace, ctx));
+  sendJson(res, 200, catalog);
+
+  // The shipped Client Skill picker caches one `skills/list` result per Session.
+  // Its documented invalidation signal for provider/catalog changes is the
+  // forwarded plugin-manager event; projection refreshes do not touch that
+  // private cache. Announce after the response is ready so the current save is
+  // never reported as failed merely because another listener throws.
+  ctx.emit("plugin-manager/changed", { reason: "plugin" });
 }
 
 /** Attach whether the every-session filter is live, so the panel can warn when it is not. */

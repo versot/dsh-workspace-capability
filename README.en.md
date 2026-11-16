@@ -12,19 +12,19 @@ already existed before the plugin was installed.
 ## Install
 
 ```bash
-dsh plugin --profile <profile> add dsh-workspace-skill-scope
+dsh plugin --profile <profile> add github:versot/dsh-workspace-skill-scope
 ```
 
 Then make sure the package is listed in that profile's `dsh.profile.bundles`
 (the plugin manager does this for you) and restart DSH.
 
-From a tarball instead of npm:
+From a local tarball instead:
 
 ```bash
-dsh plugin --profile <profile> add ./dsh-workspace-skill-scope-1.0.0.tgz
+dsh plugin --profile <profile> add ./dsh-workspace-skill-scope-<version>.tgz
 ```
 
-Requires DSH `>= 0.2.1-rc.5` (`engines.dsh`); older runtimes refuse to install it.
+Requires DSH `>= 0.2.2-rc.3` (`engines.dsh`); older runtimes refuse to install it.
 
 ## Configure
 
@@ -46,6 +46,32 @@ switch. So "user-level off, but keep `prompt-optimizer`" is
 
 Edits apply without a restart: the provider polls the file every 1.5s and a panel
 save invalidates immediately, so the next model request sees the new catalog.
+
+## Skill allowlists for child agents
+
+The plugin adds a `subagent_with_skills` tool. When a parent agent uses it to
+create a **spawned child agent**, the optional `skills` parameter is an allowlist.
+The child's effective catalog is:
+
+```text
+skills visible under the parent agent's current workspace policy ∩ explicit skills allowlist
+```
+
+Validation uses the directories currently visible to the parent agent, not every
+skill installed on the machine. The request is rejected if the list contains an
+unknown name or a name hidden from the parent by the workspace policy; names are
+never silently ignored.
+
+- omit `skills`: inherit every skill currently visible to the parent;
+- `skills: []`: create a child with zero skills;
+- pass a non-empty array: expose only the intersection above;
+- the policy is persisted in `.dsh/agent-skill-scopes.json` in the workspace.
+
+This is a **Skill-visibility restriction** for spawned child agents, not a
+security sandbox or permission boundary. It depends on the workspace-owned
+`.dsh/agent-skill-scopes.json`; an actor that can modify or delete that file can
+break the restriction. Fork may also retain already-loaded Skill content from
+conversation history and is not an isolation mechanism.
 
 ## Panel
 
@@ -75,7 +101,7 @@ marketplace's elevated-capability tier (`user-reviewed`):
 | Capability | Used for | Bound |
 | --- | --- | --- |
 | Read files | scanning `<workspace>/.dsh/skills`, `<workspace>/.agents/skills`, `~/.dsh/skills`, `~/.agents/skills`, the bundled directory | reads `SKILL.md` frontmatter only |
-| Write files | only `<workspace>/.dsh/skill-scope.yml` | validated first, then atomic tmp + rename; invalid input returns 400 and leaves the file untouched |
+| Write files | `<workspace>/.dsh/skill-scope.yml` and `.dsh/agent-skill-scopes.json` | workspace and child-Agent policies use atomic tmp + rename; invalid requests do not write |
 | Network | one same-origin prefix `/dsh-workspace-skill-scope` on DSH's own `webServer`; the browser half fetches it | no outbound requests, no telemetry |
 | Session data | session id → workspace path via `workspaceRegistry` (fallback `sessions.get(id).header.cwd`) | read-only, never stored or sent; no credentials, cookies or tokens |
 | Subprocess / shell | none | — |
@@ -84,9 +110,8 @@ marketplace's elevated-capability tier (`user-reviewed`):
 The only runtime dependency is `yaml@^2.9.0`, pinned in `pnpm-lock.yaml`
 (currently `yaml@2.9.1` with an integrity hash).
 
-Failure bounds: the filter fails open (an unfiltered catalog, never an empty one),
-a failed write returns 400/500 and keeps the previous file, and DSH older than
-`0.2.1-rc.5` refuses to load the bundle. Install / start / uninstall evidence from a
+Failure bounds: workspace discovery fails open; an allowlist store that is found but corrupt or unreadable fails closed (zero Skills). A failed child-policy write keeps the previous file and does not start the child. DSH older than
+`0.2.2-rc.3` refuses to load the bundle. `.dsh/agent-skill-scopes.json` is part of the visibility state and must move with the workspace; if it is deleted, the plugin cannot distinguish “never restricted” from “record lost”, so affected Agents return to the normal workspace catalog after a restart. Install / start / uninstall evidence from a
 disposable profile is in [docs/VERIFICATION.md](docs/VERIFICATION.md).
 
 ## Caveats
@@ -94,9 +119,8 @@ disposable profile is in [docs/VERIFICATION.md](docs/VERIFICATION.md).
 - The cross-preset filter wraps an internal service, not a documented extension
   point. A DSH upgrade can break it; when it does, the panel shows
   `filterInstalled: false` instead of silently pretending to filter.
-- It fails open: if anything throws, the unfiltered catalog is returned.
-- Skills that no scan root produced (the office family injected by Desktop,
-  runtime-registered skills) are never filtered.
+- Workspace scan failures fail open; corrupt or unreadable per-Agent allowlist storage fails closed.
+- Workspace policy only controls scan-root Skills. An explicit child-Agent allowlist filters the final complete catalog too, including Desktop/runtime Skills.
 - The project root is the nearest ancestor with `.git`, `.dsh/skill-scope.yml`,
   `.dsh/skills` or `.agents/skills`; a workspace nested inside another workspace
   inherits the outer policy unless it creates its own marker.
@@ -107,7 +131,7 @@ disposable profile is in [docs/VERIFICATION.md](docs/VERIFICATION.md).
 
 ```bash
 npm test    # manifest / patch / client id / market index / import graph
-npm pack    # dsh-workspace-skill-scope-1.0.0.tgz
+npm pack    # dsh-workspace-skill-scope-<version>.tgz
 ```
 
 `market/index.json` is a format-1 plugin-market index that lists this package;

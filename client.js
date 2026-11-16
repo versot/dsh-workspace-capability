@@ -4,8 +4,9 @@
  * Adds one row to a Session row's "..." menu that opens the workspace's skill
  * policy: every root the provider scans, every skill it found, and a checkbox
  * per group and per skill. Saving posts the policy to the Host, which rewrites
- * `.dsh/skill-scope.yml` and refreshes the mounted providers at once, so the
- * next model request in a `workspace-scope` session sees the new set.
+ * `.dsh/skill-scope.yml` and refreshes the mounted providers at once, so all
+ * presets and existing Sessions in that workspace use the new set on their
+ * next catalog read or model request.
  *
  * The panel is a self-contained overlay in `shell.overlay` (so it survives the
  * menu closing) rather than `Modal`: the shared dialog has a narrow fixed width,
@@ -19,7 +20,7 @@ window.__ModuleLoader__.load({
   factory(require) {
     const React = require('react');
     const h = React.createElement;
-    const { MenuItemButton } = require('@deepseek-ai/dsh-client-ui-primitives');
+    const { IconSkillOutlineRegular, MenuItemButton } = require('@deepseek-ai/dsh-client-ui-primitives');
 
     const ROUTE = '/dsh-workspace-skill-scope';
     const MONO = 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
@@ -141,11 +142,34 @@ window.__ModuleLoader__.load({
       });
     }
 
-    function toggleGroup(key) {
+    function toggleGroup(group) {
       const draft = snapshot.draft;
       if (draft === undefined) return;
-      const field = GROUP_SWITCH[key] ?? 'projectSkills';
-      publish({ draft: { ...draft, [field]: !groupOn(draft, key) }, saveError: undefined });
+      const names = group.skills.map((skill) => skill.name);
+      const allVisible = names.length > 0 && names.every((name) => skillVisible(draft, group.key, name));
+      const next = { ...draft, allow: [...draft.allow], deny: [...draft.deny], include: [...draft.include] };
+      const nameSet = new Set(names);
+
+      if (allVisible) {
+        // A checked group checkbox means “clear all”, regardless of whether the
+        // current visibility came from the group switch or explicit includes.
+        next.deny = [...new Set([...next.deny, ...names])];
+        next.allow = next.allow.filter((name) => !nameSet.has(name));
+        next.include = next.include.filter((name) => !nameSet.has(name));
+      } else {
+        // A mixed or empty group checkbox means “select all”. Do not merely
+        // flip the backing group switch: that would restore the previous
+        // exceptions and leave the checkbox mixed, which is surprising UI.
+        next.deny = next.deny.filter((name) => !nameSet.has(name));
+        if (groupOn(next, group.key)) {
+          if (next.allow.length > 0) next.allow = [...new Set([...next.allow, ...names])];
+          next.include = next.include.filter((name) => !nameSet.has(name));
+        } else {
+          next.include = [...new Set([...next.include, ...names])];
+        }
+      }
+
+      publish({ draft: next, saveError: undefined });
     }
 
     function toggleSkill(key, name) {
@@ -181,9 +205,8 @@ window.__ModuleLoader__.load({
         });
         const body = await response.json().catch(() => undefined);
         if (!response.ok) throw new Error(body?.error?.message ?? `HTTP ${response.status}`);
-        // The save already refreshed the mounted providers, so there is nothing
-        // left to watch here: close on success and keep the panel open only when
-        // the Host rejected the policy.
+        // The Host invalidates providers and broadcasts plugin-manager/changed,
+        // which clears the shipped composer's private per-Session Skill cache.
         publish({ data: body, draft: deriveDraft(body.config), saving: false });
         closePanel();
       } catch (error) {
@@ -200,6 +223,7 @@ window.__ModuleLoader__.load({
       return h(
         MenuItemButton,
         {
+          icon: h(IconSkillOutlineRegular, { size: 14 }),
           onSelect: () => {
             setMenuOpen(false);
             void openPanel(sessionId);
@@ -360,8 +384,12 @@ window.__ModuleLoader__.load({
     }
 
     function groupBlock(group, draft) {
-      const enabled = groupOn(draft, group.key);
       const visible = group.skills.filter((skill) => skillVisible(draft, group.key, skill.name)).length;
+      const allVisible = group.skills.length > 0 && visible === group.skills.length;
+      const mixed = visible > 0 && !allVisible;
+      const setIndeterminate = (element) => {
+        if (element !== null) element.indeterminate = mixed;
+      };
       return h(
         'div',
         { key: group.key, style: styles.group },
@@ -371,8 +399,9 @@ window.__ModuleLoader__.load({
           h('input', {
             type: 'checkbox',
             style: styles.checkbox,
-            checked: enabled,
-            onChange: () => toggleGroup(group.key),
+            checked: allVisible,
+            ref: setIndeterminate,
+            onChange: () => toggleGroup(group),
           }),
           h('span', { style: styles.groupLabel }, GROUP_LABELS[group.key] ?? group.key),
           h('span', { style: styles.count }, `${visible}/${group.skills.length} 可见`),
@@ -409,7 +438,7 @@ window.__ModuleLoader__.load({
             ? h(
                 'div',
                 { key: 'nofilter', style: { color: '#b91c1c' } },
-                '注意：所有会话的共享过滤没有装上，这份策略只对「工作区 Skill 作用域」会话生效。',
+                '注意：所有会话使用的共享 Skill 过滤没有装上；当前策略不会可靠地应用到会话目录。请重新加载插件并确认版本兼容。',
               )
             : null,
           draft.allow.length > 0
@@ -424,9 +453,9 @@ window.__ModuleLoader__.load({
         h(
           'div',
           { key: 'note', style: styles.note },
-          h('span', {}, '勾选状态就是这个工作区会话能看到的 skill；全部勾上 = 和 standard 一样。'),
+          h('span', {}, '勾选状态就是这个工作区会话能看到的 skill；全部勾上 = 不额外隐藏目录中的 skill。'),
           h('span', {}, '整组关掉后仍然可以单独勾选：那个 skill 会写进 include，别的照样隐藏。'),
-          h('span', {}, '策略只对用「工作区 Skill 作用域」preset 创建的会话生效，standard 会话不受影响。'),
+          h('span', {}, '保存后对这个工作区中的所有 preset 和已有会话生效；正在生成的回合不追溯修改，从下一次目录读取或模型请求开始使用新设置。'),
         ),
       ];
     }

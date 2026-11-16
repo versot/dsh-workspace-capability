@@ -2,7 +2,6 @@
 
 [English](README.en.md) | 中文
 
-[![npm version](https://img.shields.io/npm/v/dsh-workspace-skill-scope)](https://www.npmjs.com/package/dsh-workspace-skill-scope)
 [![license](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
 
 <img src="icon.png" width="72" height="72" alt="">
@@ -17,9 +16,9 @@ dsh plugin --profile <profile> add github:versot/dsh-workspace-skill-scope
 ```
 
 装完重启 DSH，会话行「⋯」里会出现「工作区 Skill…」。也可以装本地包：
-`dsh plugin --profile <profile> add ./dsh-workspace-skill-scope-1.0.0.tgz`。
+`dsh plugin --profile <profile> add ./dsh-workspace-skill-scope-<version>.tgz`。
 
-需要 DSH `>= 0.2.1-rc.5`（`engines.dsh`，更低版本拒绝加载）与 Node `>= 22.12.0`。
+需要 DSH `>= 0.2.2-rc.3`（`engines.dsh`，更低版本拒绝加载）与 Node `>= 22.12.0`。
 
 ## 配置
 
@@ -39,6 +38,27 @@ include: []            # 即使所属组关闭也保留的名字
 
 改文件不用重启：provider 每 1.5s 轮询签名，面板保存还会立刻失效一次。
 
+## 子 Agent 的 skill 白名单
+
+插件新增 `subagent_with_skills` 工具。父 Agent 用它创建 **spawn 子 Agent** 时，可以通过
+`skills` 参数传入允许子 Agent 使用的 skill 名称白名单。子 Agent 最终可见的 skill 是：
+
+```text
+父 Agent 当前工作区策略下的可见 skill ∩ skills 显式白名单
+```
+
+白名单的校验也以**父 Agent 当前可见目录**为准，而不是以机器上的全部 skill 为准。因此，名单中只要含有
+未知名称，或含有被工作区策略隐藏、父 Agent 当前不可见的名称，请求就会被拒绝，不会静默忽略。
+
+- 省略 `skills`：继承父 Agent 当前可见的全部 skill；
+- `skills: []`：创建零 skill 的子 Agent；
+- 传入非空数组：仅暴露交集中的 skill；
+- 策略持久化到工作区的 `.dsh/agent-skill-scopes.json`。
+
+这是对 spawn 子 Agent 的 **Skill 可见性限制**，不是安全沙箱或权限边界。它依赖工作区内的
+`.dsh/agent-skill-scopes.json`；能修改或删除该文件的主体也能破坏限制。`fork` 还可能从历史中继承已经加载的
+skill 内容，因此也不能用作隔离手段。
+
 ## 面板
 
 会话行 **「⋯」→ 工作区 Skill…**：组与单项各一个勾选框，背后就是上面那份 YAML。保存会原子重写文件、
@@ -55,7 +75,7 @@ include: []            # 即使所属组关闭也保留的名字
 | 能力 | 用在哪 | 边界 |
 | --- | --- | --- |
 | 读取文件 | 扫四个 skill 根与内置目录 | 只读 `SKILL.md` 及其 frontmatter |
-| 写入文件 | 只写 `<工作区>/.dsh/skill-scope.yml` | 先校验再原子替换；非法输入返回 400，原文件不动 |
+| 写入文件 | `<工作区>/.dsh/skill-scope.yml` 与 `.dsh/agent-skill-scopes.json` | 策略与子 Agent 白名单均原子替换；非法输入不写入 |
 | 网络 | DSH 自带 `webServer` 上的同源前缀 `/dsh-workspace-skill-scope` | 不访问任何外部服务，无遥测 |
 | 会话信息 | session id → 工作区路径（`workspaceRegistry`，退回 `sessions`） | 只读，不落盘、不外传，不读凭据 |
 | 子进程 / Shell | 无 | — |
@@ -63,8 +83,8 @@ include: []            # 即使所属组关闭也保留的名字
 
 唯一运行依赖 `yaml@^2.9.0`，锁定在 `pnpm-lock.yaml`（当前 `yaml@2.9.1`，带 integrity）。
 
-失败边界：过滤层任何异常都 fail-open（返回未过滤目录，不会让会话变零 skill）；写文件失败返回
-400/500 并保留原文件；DSH 低于 `0.2.1-rc.5` 拒绝加载。
+失败边界：工作区目录扫描异常 fail-open；已找到但损坏或不可读的白名单存储会 fail-closed（零 skill）；
+写文件失败保留原文件且不启动子 Agent；DSH 低于 `0.2.2-rc.3` 拒绝加载。`.dsh/agent-skill-scopes.json` 是可见性限制状态的一部分，迁移工作区时必须一并保留；若它被删除，插件无法区分“从未限制”和“记录丢失”，重启后相关 Agent 会退回普通工作区目录。
 
 ## 已知边界
 

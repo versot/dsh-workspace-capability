@@ -1,6 +1,6 @@
 # 发布 / 分发
 
-包名 `dsh-workspace-skill-scope`，`engines.dsh >=0.2.1-rc.5`、`engines.node >=22.12.0`。
+包名 `dsh-workspace-skill-scope`，`engines.dsh >=0.2.2-rc.3`、`engines.node >=22.12.0`。
 
 ## npm
 
@@ -10,8 +10,8 @@ npm test
 npm publish --access public
 ```
 
-或交给 CI：在仓库 Settings → Secrets 加 `NPM_TOKEN`（Automation token），然后
-`git tag v1.0.0 && git push origin v1.0.0`（`.github/workflows/publish.yml` 会跑测试并发布）。
+或交给 CI：在仓库 Settings → Secrets 加 `NPM_TOKEN`（Automation token），然后将 `<version>` 替换为
+`package.json` 当前版本并执行 `git tag v<version> && git push origin v<version>`（`.github/workflows/publish.yml` 会跑测试并发布）。
 两条路只选一条，否则第二次会因版本已存在失败。
 
 ## GitHub（免 npm）
@@ -44,4 +44,5 @@ dsh plugin --profile <profile> add github:versot/dsh-workspace-skill-scope#<40�
 - [ ] `pnpm-lock.yaml` 与依赖一致（`pnpm install --lockfile-only`）
 - [ ] `npm test` 通过
 - [ ] `docs/VERIFICATION.md` 的固定 Commit 指向本版
-- [ ] 版本号在三处一致：`package.json`、`market/index.json`、git tag
+- [ ] `package.json` 与 git tag 版本一致
+- [ ] npm 或 GitHub 版本真实发布后，再把该版本、实际发布时间与固定来源加入 `market/index.json`

@@ -21,6 +21,30 @@
 2. **裸包名那一行**：`client-modules` 的 `exactPackageSpecifier` 只接受 `pkg` 形式，`pkg/subpath`
    会被跳过，浏览器半侧就不会被加载。所以包根必须是 RPC 行，provider 才放在 `./provider` 子路径。
 
+## `subagent_with_skills` 的作用域语义
+
+`subagent_with_skills` 只用于 spawn 子 Agent。父 Agent 可传可选的 `skills` 白名单；有效集合按下式确定：
+
+```text
+父 Agent 当前工作区策略下的可见目录所产生的 skill ∩ 显式 skills 名单
+```
+
+这里的验证基准必须是父 Agent**当前可见目录**。不能先对机器上的全量 skill 校验，再在子 Agent 侧过滤，
+否则工作区策略隐藏的名称会泄漏或被错误接受。显式名单中出现未知名称，或出现父 Agent 当前不可见的隐藏名称，
+都必须拒绝整个请求；不能只丢弃无效项。
+
+输入约定：
+
+| `skills` 值 | 语义 |
+| --- | --- |
+| 省略 | 继承父 Agent 当前可见的全部 skill |
+| `[]` | 子 Agent 零 skill |
+| 非空数组 | 仅使用父 Agent 当前可见集合与该数组的交集 |
+
+解析后的子 Agent 策略持久化在工作区 `.dsh/agent-skill-scopes.json`。这是目录可见性限制，不是安全沙箱：
+能修改工作区状态的主体可以破坏它，存储被删除后重启也会退回普通工作区目录。`fork` 还可能从历史继承已加载的
+skill 内容，因此调用方不能把任何一条路径当作权限边界。
+
 ## 本地联调
 
 profile 里用 `link:` 指向本目录，改完重启 DSH 即生效：

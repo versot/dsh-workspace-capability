@@ -1,10 +1,10 @@
 /**
- * Preset half: register the workspace-scoped provider on `ctx.skills`.
+ * Optional provider export for consumers that explicitly mount a
+ * workspace-scoped Skill provider on `ctx.skills`.
  *
- * This is the row a `workspace-scope` preset mounts in place of
- * `@deepseek-ai/dsh-skill-filesystem`. It carries only the provider, so a Host
- * row of this package (index.js) can serve the panel without inventing a second
- * provider for sessions that never selected the preset.
+ * The shipped bundle does not declare a separate preset: its Host row installs
+ * the shared filter for every preset and existing Session. This export remains
+ * available for compatibility with explicit provider compositions.
  *
  * @module dsh-workspace-skill-scope/provider
  */

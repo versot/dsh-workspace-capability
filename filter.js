@@ -1,16 +1,15 @@
 /**
- * Host-level catalog filter, for Sessions that were created before the
- * `workspace-scope` preset existed.
+ * Host-level catalog filter for every preset and existing Session.
  *
- * A Session binds its preset at creation: an old Session keeps the
- * `standard` preset (and that preset's `skill-filesystem` provider) for its
- * whole life, so nothing inside a preset can reach it. The shared `skills`
+ * A Session binds its preset at creation, so a workspace-specific preset could
+ * not reach Sessions created under another composition. The shared `skills`
  * service can, so this module wraps its read paths and drops the names the
  * workspace policy hides.
  *
- * Only names this package manages are touched: a skill that no scan root
- * produced (office skills, runtime-registered skills) is always kept. Any
- * failure fails open — an unfiltered catalog is better than a broken one.
+ * Workspace policy touches only names managed by its scan roots. An explicit
+ * Agent allowlist is then applied to the complete resulting catalog, including
+ * runtime Skills. Workspace discovery failures fail open; persisted Agent
+ * policy failures fail closed in AgentSkillScopes.
  *
  * @module dsh-workspace-skill-scope/filter
  */
@@ -28,9 +27,10 @@ export function isSkillFilterActive() {
  * Wrap `skills.list` / `skills.snapshot` / `skills.get` with the workspace policy.
  * @param {object} ctx - host context (used for logger warnings).
  * @param {object} skills - the `skills` service instance.
+ * @param {object} [agentScopes] - durable Agent-specific allowlist resolver.
  * @returns {Function} disposer restoring the original methods.
  */
-export function installSkillFilter(ctx, skills) {
+export function installSkillFilter(ctx, skills, agentScopes) {
   if (skills === undefined || skills === null) return () => {};
   if (installed.has(skills)) return () => {};
   const originalList = skills.list;
@@ -62,25 +62,41 @@ export function installSkillFilter(ctx, skills) {
     return visible === undefined ? true : visible;
   }
 
+  async function agentAllowlist(options) {
+    if (agentScopes === undefined || options?.scope === undefined) return undefined;
+    return agentScopes.get(options.scope, options.cwd);
+  }
+
+  function filterResult(result, managed, allowlist) {
+    const allowed = allowlist === undefined ? undefined : new Set(allowlist);
+    return result.filter((skill) => (managed === undefined || keep(managed, skill.name))
+      && (allowed === undefined || allowed.has(skill.name)));
+  }
+
   try {
-    skills.list = async function list(options = {}) {
-      const result = await originalList.call(this, options);
-      const managed = await managedFor(options.cwd);
-      return managed === undefined ? result : result.filter((skill) => keep(managed, skill.name));
-    };
     if (typeof originalSnapshot === "function") {
+      // DSH's list() delegates to this.snapshot(options), so wrapping snapshot
+      // filters both paths once. Wrapping list as well would repeat workspace
+      // discovery and Agent policy lookup for every list call.
       skills.snapshot = async function snapshot(options = {}) {
         const result = await originalSnapshot.call(this, options);
         if (result === undefined) return result;
-        const managed = await managedFor(options.cwd);
-        if (managed === undefined) return result;
-        return { ...result, skills: result.skills.filter((skill) => keep(managed, skill.name)) };
+        const [managed, allowlist] = await Promise.all([managedFor(options.cwd), agentAllowlist(options)]);
+        return { ...result, skills: filterResult(result.skills, managed, allowlist) };
+      };
+    } else {
+      // Compatibility fallback for a skills service without snapshot().
+      skills.list = async function list(options = {}) {
+        const result = await originalList.call(this, options);
+        const [managed, allowlist] = await Promise.all([managedFor(options.cwd), agentAllowlist(options)]);
+        return filterResult(result, managed, allowlist);
       };
     }
     if (typeof originalGet === "function") {
       skills.get = async function get(name, options = {}) {
-        const managed = await managedFor(options.cwd);
+        const [managed, allowlist] = await Promise.all([managedFor(options.cwd), agentAllowlist(options)]);
         if (managed !== undefined && !keep(managed, name)) return undefined;
+        if (allowlist !== undefined && !allowlist.includes(name)) return undefined;
         return originalGet.call(this, name, options);
       };
     }
