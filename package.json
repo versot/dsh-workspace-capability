@@ -26,7 +26,7 @@
     "./client": "./client.js",
     "./catalog": "./catalog.js",
     "./locale/*.json": "./locale/*.json",
-    "./icon": "./icon.svg"
+    "./icon": "./icon.png"
   },
   "files": [
     "index.js",
@@ -37,7 +37,7 @@
     "cordis.patch.yml",
     "docs/*.md",
     "locale/*.json",
-    "icon.svg"
+    "icon.png"
   ],
   "scripts": {
     "test": "node scripts/check.mjs",
