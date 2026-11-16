@@ -67,6 +67,28 @@ Two rows, one bundle:
 - `provider.js` and `catalog.js` hold the scanner and a real skill provider; the
   provider is not mounted by default (no preset is declared).
 
+## Permissions and external services
+
+This plugin needs filesystem and same-origin network access, which puts it in the
+marketplace's elevated-capability tier (`user-reviewed`):
+
+| Capability | Used for | Bound |
+| --- | --- | --- |
+| Read files | scanning `<workspace>/.dsh/skills`, `<workspace>/.agents/skills`, `~/.dsh/skills`, `~/.agents/skills`, the bundled directory | reads `SKILL.md` frontmatter only |
+| Write files | only `<workspace>/.dsh/skill-scope.yml` | validated first, then atomic tmp + rename; invalid input returns 400 and leaves the file untouched |
+| Network | one same-origin prefix `/dsh-workspace-skill-scope` on DSH's own `webServer`; the browser half fetches it | no outbound requests, no telemetry |
+| Session data | session id → workspace path via `workspaceRegistry` (fallback `sessions.get(id).header.cwd`) | read-only, never stored or sent; no credentials, cookies or tokens |
+| Subprocess / shell | none | — |
+| Lifecycle scripts | none | install runs no code |
+
+The only runtime dependency is `yaml@^2.9.0`, pinned in `pnpm-lock.yaml`
+(currently `yaml@2.9.1` with an integrity hash).
+
+Failure bounds: the filter fails open (an unfiltered catalog, never an empty one),
+a failed write returns 400/500 and keeps the previous file, and DSH older than
+`0.2.1-rc.5` refuses to load the bundle. Install / start / uninstall evidence from a
+disposable profile is in [docs/VERIFICATION.md](docs/VERIFICATION.md).
+
 ## Caveats
 
 - The cross-preset filter wraps an internal service, not a documented extension

@@ -85,6 +85,24 @@ include: []            # 即使整组关闭也保留的名字（面板里单点�
 改文件不用重启：provider 每 1.5s 轮询签名，变化时 invalidate，模型侧下一次请求就能看到新目录；
 面板保存还会直接 invalidate 一次，所以是立刻生效。
 
+## 权限与外部服务（DSH STORE / Permissions）
+
+这个插件需要文件与网络能力，属于商城口径里的高权限插件（`user-reviewed`）。具体边界：
+
+| 能力 | 用在哪 | 边界 |
+| --- | --- | --- |
+| 读取文件 | 扫 `<工作区>/.dsh/skills`、`<工作区>/.agents/skills`、`~/.dsh/skills`、`~/.agents/skills`、内置 skill 目录 | 只读 `SKILL.md` 及其 frontmatter；不跟随出目录的符号链接目标 |
+| 写入文件 | 只写 `<工作区>/.dsh/skill-scope.yml` | 临时文件 + `rename` 原子替换；内容先过 schema 校验，非法直接 400、不落盘 |
+| 网络 | Host 在 DSH 自带 `webServer` 上注册一个同源前缀 `/dsh-workspace-skill-scope`；浏览器半侧 `fetch` 该前缀 | **不访问任何外部服务**，无遥测，无外发上报 |
+| 会话信息 | 用 session id 换工作区路径（`workspaceRegistry`，退回 `sessions.get(id).header.cwd`） | 只读，不落盘、不外传；不读取凭据、cookie、token |
+| 子进程 / Shell | 无 | 不执行任何外部命令 |
+| 生命周期脚本 | 无 `preinstall/install/postinstall/prepare` | 安装期不跑代码 |
+
+唯一的运行依赖是 `yaml@^2.9.0`（锁定在 `pnpm-lock.yaml`，当前解析 `yaml@2.9.1`，带 integrity）。
+
+失败边界：过滤层任何异常都 fail-open（返回未过滤目录，不会让会话变零 skill）；写文件失败返回 400/500 且保留原文件；
+DSH 低于 `0.2.1-rc.5` 拒绝加载。一次性 Profile 的安装 / 启动 / 卸载证据见 [docs/VERIFICATION.md](docs/VERIFICATION.md)。
+
 ## 已知边界
 
 - **跨 preset 的过滤是包在共享 `skills` 服务上的**（`filter.js` 改写 `list`/`snapshot`/`get`），属于非官方扩展点。

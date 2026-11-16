@@ -28,7 +28,6 @@ import {
 import { installSkillFilter, isSkillFilterActive } from "./filter.js";
 
 export const name = "workspace-skill-scope-host";
-export const inject = ["webServer"];
 
 const PREFIX = "/dsh-workspace-skill-scope";
 const BODY_LIMIT_BYTES = 256 * 1024;
@@ -51,22 +50,27 @@ export function apply(ctx) {
     skillsCtx.effect(() => () => restore(), "workspace-skill-scope: shared catalog filter");
   });
 
-  ctx.effect(
-    () =>
-      ctx.webServer.register({
-        kind: "prefix",
-        path: PREFIX,
-        handler: (req, res) => {
-          handle(ctx, req, res).catch((error) => {
-            ctx.logger?.warn?.(`workspace-skill-scope: ${messageOf(error)}`);
-            if (!res.destroyed && !res.writableEnded) {
-              sendJson(res, 500, { error: { code: "internal-error", message: "workspace-skill-scope: internal error" } });
-            }
-          });
-        },
-      }),
-    `workspace-skill-scope: ${PREFIX} route`,
-  );
+  // Lazy: a headless or minimal composition has no webServer, and a top-level
+  // inject would leave this row pending forever. The filter above does not need
+  // it; the route appears when (and if) the service does.
+  ctx.inject(["webServer"], (webCtx) => {
+    webCtx.effect(
+      () =>
+        webCtx.webServer.register({
+          kind: "prefix",
+          path: PREFIX,
+          handler: (req, res) => {
+            handle(webCtx, req, res).catch((error) => {
+              webCtx.logger?.warn?.(`workspace-skill-scope: ${messageOf(error)}`);
+              if (!res.destroyed && !res.writableEnded) {
+                sendJson(res, 500, { error: { code: "internal-error", message: "workspace-skill-scope: internal error" } });
+              }
+            });
+          },
+        }),
+      `workspace-skill-scope: ${PREFIX} route`,
+    );
+  });
 }
 
 async function handle(ctx, req, res) {
