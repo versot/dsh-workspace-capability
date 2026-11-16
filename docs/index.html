@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>dsh-workspace-skill-scope — 按工作区控制 skill</title>
+<meta name="description" content="Per-workspace skill visibility for DeepSeek Harness: one .dsh/skill-scope.yml plus a checklist panel, enforced for every preset.">
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: #0b1220; color: #e2e8f0;
+    font: 16px/1.65 -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+  main { max-width: 760px; margin: 0 auto; padding: 72px 24px 96px; }
+  .hero { display: flex; gap: 20px; align-items: center; }
+  .hero svg { width: 72px; height: 72px; flex: 0 0 72px; }
+  h1 { font-size: 30px; line-height: 1.2; margin: 0 0 6px; letter-spacing: -0.02em; }
+  .tagline { color: #94a3b8; margin: 0; }
+  .lede { margin: 28px 0 0; color: #cbd5e1; }
+  h2 { font-size: 16px; text-transform: uppercase; letter-spacing: 0.08em; color: #64748b; margin: 44px 0 12px; }
+  pre {
+    background: #0f172a; border: 1px solid #1e293b; border-radius: 10px;
+    padding: 14px 16px; overflow-x: auto; font-size: 13.5px; line-height: 1.6;
+  }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  p code, li code { background: #16213a; padding: 1px 5px; border-radius: 4px; font-size: 0.9em; }
+  ul { padding-left: 20px; color: #cbd5e1; }
+  a { color: #38bdf8; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+  .links a { border: 1px solid #24304a; padding: 6px 12px; border-radius: 999px; font-size: 14px; }
+  footer { margin-top: 64px; color: #475569; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <div class="hero">
+    <svg viewBox="0 0 64 64" aria-hidden="true">
+      <defs>
+        <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#1f2937"/><stop offset="1" stop-color="#0b1220"/>
+        </linearGradient>
+        <clipPath id="card"><rect x="12" y="15" width="40" height="34" rx="7"/></clipPath>
+      </defs>
+      <rect width="64" height="64" rx="14" fill="url(#bg)"/>
+      <g clip-path="url(#card)">
+        <rect x="12" y="15" width="20" height="34" fill="#0ea5e9"/>
+        <rect x="32" y="15" width="20" height="34" fill="#101a2b"/>
+      </g>
+      <rect x="12" y="15" width="40" height="34" rx="7" fill="none" stroke="#3b4a63" stroke-width="1.8"/>
+      <path d="M17.5 32.5l4.4 4.4 7.2-8" fill="none" stroke="#f0f9ff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M37 32.5l4.4 4.4 7.2-8" fill="none" stroke="#3f4e66" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M36.5 43l11-22" stroke="#8b9bb4" stroke-width="2.8" stroke-linecap="round"/>
+    </svg>
+    <div>
+      <h1>dsh-workspace-skill-scope</h1>
+      <p class="tagline">按工作区控制会话能看到哪些 skill · Per-workspace skill visibility</p>
+    </div>
+  </div>
+
+  <p class="lede">
+    每个工作区一份 <code>.dsh/skill-scope.yml</code>，会话行菜单里勾选。<strong>对所有 preset 生效</strong>——标准 / PTC /
+    极简 / 创造，也包括插件安装之前就存在的老会话。
+  </p>
+
+  <h2>安装</h2>
+  <pre><code>dsh plugin --profile &lt;profile&gt; add github:versot/dsh-workspace-skill-scope</code></pre>
+  <p>重启 DSH 后，会话行「⋯」里出现「工作区 Skill…」。</p>
+
+  <h2>配置</h2>
+  <pre><code># &lt;工作区&gt;/.dsh/skill-scope.yml
+projectSkills: true    # 工作区 .dsh/skills、.agents/skills
+userSkills: false      # ~/.dsh/skills、~/.agents/skills
+bundled: true          # DSH 自带 skill
+allow: []              # 非空 = 白名单
+deny: []               # 精确排除
+include: []            # 整组关掉时仍保留的名字</code></pre>
+  <p>文件不存在 = 与标准模式一致，全部可用。改完即时生效，不用重启。</p>
+
+  <h2>怎么做的</h2>
+  <ul>
+    <li>Host 行提供面板的 JSON 接口，并包一层共享 <code>skills</code> 服务做过滤；</li>
+    <li>所以老会话、其他模式都跟着工作区走；</li>
+    <li>过滤失败一律 fail-open，不会把会话搞成零 skill。</li>
+  </ul>
+
+  <div class="links">
+    <a href="https://github.com/versot/dsh-workspace-skill-scope">GitHub</a>
+    <a href="https://github.com/versot/dsh-workspace-skill-scope#readme">README</a>
+    <a href="https://github.com/versot/dsh-workspace-skill-scope/blob/main/docs/VERIFICATION.md">验收记录</a>
+    <a href="https://raw.githubusercontent.com/versot/dsh-workspace-skill-scope/main/market/index.json">市场索引</a>
+  </div>
+
+  <footer>MIT © 2026 versot · 需要 DSH ≥ 0.2.1-rc.5</footer>
+</main>
+</body>
+</html>
