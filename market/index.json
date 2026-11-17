@@ -55,11 +55,11 @@
       "versions": [
         {
           "version": "1.0.0",
-          "publishTimestamp": 1794823029,
+          "publishTimestamp": 1794890880,
           "source": {
             "type": "git",
             "url": "https://github.com/versot/dsh-workspace-skill-scope.git",
-            "commit": "7de3bf10833669c00a4c2f11635679cc943c8bb5"
+            "commit": "1771e769198bc3a372b987be1767f4559352e314"
           },
           "engines": {
             "dsh": ">=0.2.2-rc.3"
