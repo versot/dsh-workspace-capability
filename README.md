@@ -15,7 +15,7 @@
 dsh plugin --profile <profile> add github:versot/dsh-workspace-skill-scope
 ```
 
-装完重启 DSH，会话行「⋯」里会出现「工作区 Skill…」。也可以装本地包：
+装完重启 DSH，会话行「⋯」里会出现「工作区 Skill 与 MCP…」。也可以装本地包：
 `dsh plugin --profile <profile> add ./dsh-workspace-skill-scope-<version>.tgz`。
 
 需要 DSH `>= 0.2.2-rc.3`（`engines.dsh`，更低版本拒绝加载）与 Node `>= 22.12.0`。
@@ -65,8 +65,7 @@ skill 内容，因此也不能用作隔离手段。
 
 ## 面板
 
-会话行 **「⋯」→ 工作区 Skill 与 MCP…**：Skill 组/单项和每台 MCP Server 各有勾选框，背后就是上面那份 YAML。保存会原子重写文件、
-刷新已挂载的 provider，然后自动关闭面板。
+会话行 **「⋯」→ 工作区 Skill 与 MCP…**：Skill 组/单项和每台 MCP Server 各有勾选框，背后就是上面那份 YAML。保存时先写入同目录临时文件，再通过 `rename` 替换目标文件、刷新已挂载的 provider，然后自动关闭面板；替换语义当前仅在 macOS 验证，其他平台尚未验证。
 
 - 组关掉后仍可单独勾选某个 skill（写进 `include`）；
 - 全部勾上 = 与标准模式完全一致；
@@ -80,7 +79,7 @@ skill 内容，因此也不能用作隔离手段。
 | 能力 | 用在哪 | 边界 |
 | --- | --- | --- |
 | 读取文件 | 扫四个 skill 根与内置目录 | 只读 `SKILL.md` 及其 frontmatter |
-| 写入文件 | `<工作区>/.dsh/skill-scope.yml` 与 `.dsh/agent-skill-scopes.json` | 策略与子 Agent 白名单均原子替换；非法输入不写入 |
+| 写入文件 | `<工作区>/.dsh/skill-scope.yml` 与 `.dsh/agent-skill-scopes.json` | 同目录临时文件后通过 `rename` 替换；非法输入不写入；替换语义当前仅在 macOS 验证 |
 | 网络 | DSH 自带 `webServer` 上的同源前缀 `/dsh-workspace-skill-scope` | 不访问任何外部服务，无遥测 |
 | 会话信息 | session id → 工作区路径（`workspaceRegistry`，退回 `sessions`） | 只读，不落盘、不外传，不读凭据 |
 | 子进程 / Shell | 无 | — |

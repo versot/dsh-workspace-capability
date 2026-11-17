@@ -84,8 +84,7 @@ conversation history and is not an isolation mechanism.
 ## Panel
 
 Session row **「⋯」→ 工作区 Skill 与 MCP…** opens a checklist: Skill groups/items
-and one checkbox per complete MCP server, backed by the YAML above. Saving rewrites the file atomically, refreshes
-the mounted providers, and closes the panel. Configured servers that are currently disconnected remain listed as offline, so unrelated saves do not discard them. The API and panel report `skillFilterInstalled` and `mcpFilterInstalled` separately; `filterInstalled` remains a compatibility alias for the Skill filter.
+and one checkbox per complete MCP server, backed by the YAML above. Policies are written to a same-directory temporary file and then replaced with `rename`; replacement semantics have currently been verified only on macOS. Saving also refreshes the mounted providers and closes the panel. Configured servers that are currently disconnected remain listed as offline, so unrelated saves do not discard them. The API and panel report `skillFilterInstalled` and `mcpFilterInstalled` separately; `filterInstalled` remains a compatibility alias for the Skill filter.
 
 ## How it works
 
@@ -109,7 +108,7 @@ marketplace's elevated-capability tier (`user-reviewed`):
 | Capability | Used for | Bound |
 | --- | --- | --- |
 | Read files | scanning `<workspace>/.dsh/skills`, `<workspace>/.agents/skills`, `~/.dsh/skills`, `~/.agents/skills`, the bundled directory | reads `SKILL.md` frontmatter only |
-| Write files | `<workspace>/.dsh/skill-scope.yml` and `.dsh/agent-skill-scopes.json` | workspace and child-Agent policies use atomic tmp + rename; invalid requests do not write |
+| Write files | `<workspace>/.dsh/skill-scope.yml` and `.dsh/agent-skill-scopes.json` | same-directory temporary file followed by `rename`; invalid requests do not write; replacement semantics are currently verified only on macOS |
 | Network | one same-origin prefix `/dsh-workspace-skill-scope` on DSH's own `webServer`; the browser half fetches it | no outbound requests, no telemetry |
 | Session data | session id → workspace path via `workspaceRegistry` (fallback `sessions.get(id).header.cwd`) | read-only, never stored or sent; no credentials, cookies or tokens |
 | Subprocess / shell | none | — |
