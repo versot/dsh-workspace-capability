@@ -8,12 +8,12 @@
  * specifier, so the root entry has to be the one that carries it. The skill
  * provider itself lives in `provider.js` and is mounted by the preset, not here.
  *
- * Routes (prefix `/dsh-workspace-skill-scope`):
+ * Routes (prefix `/dsh-workspace-capability`):
  *   GET  /catalog?session=<sessionId>   workspace of that session
  *   GET  /catalog?workspace=<absPath>   explicit workspace (used by tests)
  *   POST /policy                        { workspace|session, config } → rewritten catalog
  *
- * @module dsh-workspace-skill-scope
+ * @module dsh-workspace-capability
  */
 import { statSync } from "node:fs";
 import { mkdir, rename, unlink, writeFile } from "node:fs/promises";
@@ -30,12 +30,12 @@ import { installSkillFilter, isSkillFilterActive } from "./filter.js";
 import { installMcpToolFilter, isMcpToolFilterActive } from "./mcp-scope.js";
 import { AgentSkillScopes, installSkilledSubagentTool } from "./agent-scopes.js";
 
-export const name = "workspace-skill-scope-host";
+export const name = "workspace-capability-host";
 
-const PREFIX = "/dsh-workspace-skill-scope";
+const PREFIX = "/dsh-workspace-capability";
 const BODY_LIMIT_BYTES = 256 * 1024;
 const POLICY_HEADER = [
-  "# 由「工作区 Skill」面板写入；也可以直接手改。",
+  "# 由「工作区能力范围」面板写入；也可以直接手改。",
   "# projectSkills / userSkills / bundled 是整组开关；include 里的名字即使整组关掉也保留；deny 精确排除。",
   "",
 ].join("\n");
@@ -52,21 +52,21 @@ export function apply(ctx) {
   // preset. Fail-open: an empty catalog is worse than an unfiltered one.
   ctx.inject(["skills"], (skillsCtx) => {
     const restore = installSkillFilter(skillsCtx, skillsCtx.skills, agentScopes);
-    skillsCtx.effect(() => () => restore(), "workspace-skill-scope: shared catalog filter");
+    skillsCtx.effect(() => () => restore(), "workspace-capability: shared catalog filter");
   });
 
   ctx.inject(["tools", "workingDirectory"], (toolCtx) => {
     const policies = createMcpPolicyResolver(toolCtx);
     toolCtx.effect(
       () => installMcpToolFilter(toolCtx, toolCtx.tools, agentScopes, policies),
-      "workspace-skill-scope: shared MCP tool filter",
+      "workspace-capability: shared MCP tool filter",
     );
   });
 
   ctx.inject(["tools", "subagents", "skills", "workingDirectory", "sessions"], (toolCtx) => {
     toolCtx.effect(
       () => installSkilledSubagentTool(toolCtx, agentScopes),
-      "workspace-skill-scope: skilled subagent tool",
+      "workspace-capability: skilled subagent tool",
     );
   });
 
@@ -81,14 +81,14 @@ export function apply(ctx) {
           path: PREFIX,
           handler: (req, res) => {
             handle(webCtx, req, res).catch((error) => {
-              webCtx.logger?.warn?.(`workspace-skill-scope: ${messageOf(error)}`);
+              webCtx.logger?.warn?.(`workspace-capability: ${messageOf(error)}`);
               if (!res.destroyed && !res.writableEnded) {
-                sendJson(res, 500, { error: { code: "internal-error", message: "workspace-skill-scope: internal error" } });
+                sendJson(res, 500, { error: { code: "internal-error", message: "workspace-capability: internal error" } });
               }
             });
           },
         }),
-      `workspace-skill-scope: ${PREFIX} route`,
+      `workspace-capability: ${PREFIX} route`,
     );
   });
 }
@@ -144,7 +144,7 @@ async function savePolicy(ctx, req, res) {
   }
 
   const root = await findWorkspaceRoot(workspace);
-  const file = join(root, ".dsh", "skill-scope.yml");
+  const file = join(root, ".dsh", "capability-scope.yml");
   let config;
   try {
     config = normalizeConfig(body.config, file, ctx);
@@ -207,7 +207,7 @@ function createMcpPolicyResolver(ctx) {
         cache.set(agent, config);
         return config;
       } catch (error) {
-        ctx.logger?.warn?.(`workspace-skill-scope: MCP policy ignored for ${cwd}: ${messageOf(error)}`);
+        ctx.logger?.warn?.(`workspace-capability: MCP policy ignored for ${cwd}: ${messageOf(error)}`);
         cache.delete(agent);
         return undefined;
       }

@@ -1,10 +1,10 @@
 /**
- * Browser half of the Workspace Skill panel.
+ * Browser half of the Workspace Capability panel.
  *
  * Adds one row to a Session row's "..." menu that opens the workspace's skill
  * policy: every root the provider scans, every skill it found, and a checkbox
  * per group and per skill. Saving posts the policy to the Host, which rewrites
- * `.dsh/skill-scope.yml` and refreshes the mounted providers at once, so all
+ * `.dsh/capability-scope.yml` and refreshes the mounted providers at once, so all
  * presets and existing Sessions in that workspace use the new set on their
  * next catalog read or model request.
  *
@@ -12,17 +12,17 @@
  * menu closing) rather than `Modal`: the shared dialog has a narrow fixed width,
  * and this panel has to stay readable on a narrow window.
  *
- * @module dsh-workspace-skill-scope/client
+ * @module dsh-workspace-capability/client
  */
 
 window.__ModuleLoader__.load({
-  id: 'dsh-workspace-skill-scope',
+  id: 'dsh-workspace-capability',
   factory(require) {
     const React = require('react');
     const h = React.createElement;
     const { IconSkillOutlineRegular, MenuItemButton } = require('@deepseek-ai/dsh-client-ui-primitives');
 
-    const ROUTE = '/dsh-workspace-skill-scope';
+    const ROUTE = '/dsh-workspace-capability';
     const MONO = 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
     const GROUP_LABELS = {
       'project-dsh': '工作区 · .dsh/skills',
@@ -245,7 +245,7 @@ window.__ModuleLoader__.load({
             void openPanel(sessionId);
           },
         },
-        '工作区 Skill 与 MCP…',
+        '工作区能力范围…',
       );
     }
 
@@ -548,13 +548,13 @@ window.__ModuleLoader__.load({
             style: styles.card,
             role: 'dialog',
             'aria-modal': 'true',
-            'aria-label': '工作区 Skill 与 MCP',
+            'aria-label': '工作区能力范围',
             onClick: (event) => event.stopPropagation(),
           },
           h(
             'div',
             { style: styles.header },
-            h('h2', { style: styles.title }, '工作区 Skill 与 MCP'),
+            h('h2', { style: styles.title }, '工作区能力范围'),
             h('button', { type: 'button', style: styles.close, onClick: closePanel, 'aria-label': '关闭' }, '✕'),
           ),
           h('div', { style: styles.body }, panelBody(state)),
@@ -595,11 +595,11 @@ window.__ModuleLoader__.load({
       inject: ['slots'],
       apply(ctx) {
         ctx.slots.inject('shell.overlay', () =>
-          ctx.slots.register({ name: 'shell.overlay', id: 'workspace-skill-scope', order: 60 }, WorkspaceSkillPanel),
+          ctx.slots.register({ name: 'shell.overlay', id: 'workspace-capability', order: 60 }, WorkspaceSkillPanel),
         );
         ctx.slots.inject('sidebar.workspaces.session.menu.item', () =>
           ctx.slots.register(
-            { name: 'sidebar.workspaces.session.menu.item', id: 'workspace-skill-scope', order: 460 },
+            { name: 'sidebar.workspaces.session.menu.item', id: 'workspace-capability', order: 460 },
             WorkspaceSkillMenuItem,
           ),
         );

@@ -3,7 +3,7 @@
  *
  * Replaces `@deepseek-ai/dsh-skill-filesystem` inside an agent preset and
  * filters the discovered catalog with a file that lives in the workspace:
- * `<workspace>/.dsh/skill-scope.yml`.
+ * `<workspace>/.dsh/capability-scope.yml`.
  *
  * Without that file the behavior matches the stock filesystem provider:
  * project roots, user roots and the bundled root are all scanned.
@@ -11,7 +11,7 @@
  * This module holds no Cordis plugin: `provider.js` is the preset half and
  * `index.js` is the Host half, and both read the catalog from here.
  *
- * @module dsh-workspace-skill-scope/catalog
+ * @module dsh-workspace-capability/catalog
  */
 import { existsSync } from "node:fs";
 import { readdir, readFile, realpath, stat } from "node:fs/promises";
@@ -26,7 +26,7 @@ const PROJECT_AGENTS_RANK = 200;
 const USER_DSH_RANK = 400;
 const USER_AGENTS_RANK = 500;
 const BUNDLED_RANK = 600;
-const CONFIG_SEGMENTS = [".dsh", "skill-scope.yml"];
+const CONFIG_SEGMENTS = [".dsh", "capability-scope.yml"];
 const SKILL_NAME = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const POLL_INTERVAL_MS = 1500;
 const MAX_KNOWN_WORKSPACES = 32;
@@ -80,7 +80,7 @@ export class WorkspaceScopeProvider {
         candidates.push(...await discoverRoot(entry, PROVIDER_NAME, this.ctx, config));
       } catch (error) {
         if (options.signal?.aborted === true) throw error;
-        warn(this.ctx, `skill-scope: root ${entry.path} skipped: ${messageOf(error)}`);
+        warn(this.ctx, `capability-scope: root ${entry.path} skipped: ${messageOf(error)}`);
       }
     }
     rememberWorkspace(this.known, root, await signatureFor(root, config, roots));
@@ -140,7 +140,7 @@ export class WorkspaceScopeProvider {
 
 /**
  * Resolve the workspace root for one session directory: the nearest ancestor
- * that is a git work tree or that carries a skill-scope file.
+ * that is a git work tree or that carries a capability-scope file.
  * @param {string} cwd - session working directory.
  * @returns {Promise<string>} absolute workspace root.
  */
@@ -164,7 +164,7 @@ async function isWorkspaceMarker(directory) {
 }
 
 /**
- * Read `<workspace>/.dsh/skill-scope.yml`.
+ * Read `<workspace>/.dsh/capability-scope.yml`.
  * @param {string} root - workspace root.
  * @param {object} ctx - plugin context for warnings.
  * @returns {Promise<{config: object, signature: string}>} normalized policy.
@@ -179,24 +179,24 @@ export async function readWorkspaceConfig(root, ctx) {
     stamp = `${info.mtimeMs}:${info.size}`;
   } catch (error) {
     if (isAbsentPathError(error)) return { config: DEFAULT_CONFIG, signature: "absent" };
-    warn(ctx, `skill-scope: ${path} ignored: ${messageOf(error)}`);
+    warn(ctx, `capability-scope: ${path} ignored: ${messageOf(error)}`);
     return { config: DEFAULT_CONFIG, signature: "unreadable" };
   }
   let parsed;
   try {
     parsed = parseYaml(raw);
   } catch (error) {
-    warn(ctx, `skill-scope: ${path} ignored: invalid YAML: ${messageOf(error)}`);
+    warn(ctx, `capability-scope: ${path} ignored: invalid YAML: ${messageOf(error)}`);
     return { config: DEFAULT_CONFIG, signature: `invalid:${stamp}` };
   }
   if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
-    warn(ctx, `skill-scope: ${path} ignored: the file must be a YAML mapping`);
+    warn(ctx, `capability-scope: ${path} ignored: the file must be a YAML mapping`);
     return { config: DEFAULT_CONFIG, signature: `invalid:${stamp}` };
   }
   try {
     return { config: normalizeConfig(parsed, path, ctx), signature: stamp };
   } catch (error) {
-    warn(ctx, `skill-scope: ${path} ignored: ${messageOf(error)}`);
+    warn(ctx, `capability-scope: ${path} ignored: ${messageOf(error)}`);
     return { config: DEFAULT_CONFIG, signature: `invalid:${stamp}` };
   }
 }
@@ -211,7 +211,7 @@ export async function readWorkspaceConfig(root, ctx) {
 export function normalizeConfig(input, path, ctx) {
   const known = new Set(["projectSkills", "userSkills", "bundled", "allow", "deny", "include", "mcpServers", "comment"]);
   for (const key of Object.keys(input)) {
-    if (!known.has(key)) warn(ctx, `skill-scope: ${path} has unknown field "${key}"`);
+    if (!known.has(key)) warn(ctx, `capability-scope: ${path} has unknown field "${key}"`);
   }
   const config = {
     projectSkills: readBoolean(input, "projectSkills", true, path),
@@ -366,7 +366,7 @@ export async function discoverRoot(root, providerName, ctx, config, options = {}
     try {
       parsed = await readSkillFile(skillPath, ctx, undefined, root.trusted === true);
     } catch (error) {
-      warn(ctx, `skill-scope: ${skillPath} skipped: ${messageOf(error)}`);
+      warn(ctx, `capability-scope: ${skillPath} skipped: ${messageOf(error)}`);
       continue;
     }
     if (parsed === undefined) continue;
@@ -410,7 +410,7 @@ export async function collectWorkspaceCatalog(workspace, ctx) {
     try {
       candidates = await discoverRoot(scanRoot, PROVIDER_NAME, ctx, config, { includeHidden: true });
     } catch (error) {
-      warn(ctx, `skill-scope: root ${scanRoot.path} skipped: ${messageOf(error)}`);
+      warn(ctx, `capability-scope: root ${scanRoot.path} skipped: ${messageOf(error)}`);
     }
     const groupEnabled = switchFor(scanRoot.source, config);
     groups.push({
@@ -519,7 +519,7 @@ async function entryKind(entryPath, entry, ctx) {
     if (info.isFile()) return "file";
     return undefined;
   } catch (error) {
-    warn(ctx, `skill-scope: ${entryPath} skipped: ${messageOf(error)}`);
+    warn(ctx, `capability-scope: ${entryPath} skipped: ${messageOf(error)}`);
     return undefined;
   }
 }
@@ -538,24 +538,24 @@ async function readSkillFile(path, ctx, signal, trusted = false) {
   }
   const frontmatter = parseFrontmatter(raw);
   if (frontmatter === undefined) {
-    warn(ctx, `skill-scope: ${resolved} ignored: missing YAML frontmatter`);
+    warn(ctx, `capability-scope: ${resolved} ignored: missing YAML frontmatter`);
     return undefined;
   }
   const skillName = stringField(frontmatter.data, "name");
   const description = stringField(frontmatter.data, "description");
   if (skillName === undefined || description === undefined) {
-    warn(ctx, `skill-scope: ${resolved} ignored: frontmatter requires name and description`);
+    warn(ctx, `capability-scope: ${resolved} ignored: frontmatter requires name and description`);
     return undefined;
   }
   if (!SKILL_NAME.test(skillName)) {
-    warn(ctx, `skill-scope: ${resolved} ignored: invalid skill name "${skillName}"`);
+    warn(ctx, `capability-scope: ${resolved} ignored: invalid skill name "${skillName}"`);
     return undefined;
   }
   let invocation;
   try {
     invocation = parseInvocationPolicy(frontmatter.data);
   } catch (error) {
-    warn(ctx, `skill-scope: ${resolved} ignored: invalid invocation frontmatter: ${messageOf(error)}`);
+    warn(ctx, `capability-scope: ${resolved} ignored: invalid invocation frontmatter: ${messageOf(error)}`);
     return undefined;
   }
   return {

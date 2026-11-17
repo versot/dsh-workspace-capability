@@ -6,7 +6,7 @@ import { mcpServerVisible, parseMcpToolName } from "../mcp-scope.js";
 const quiet = { logger: { warn() {} } };
 
 function config(input) {
-  return normalizeConfig(input, "/workspace/.dsh/skill-scope.yml", quiet);
+  return normalizeConfig(input, "/workspace/.dsh/capability-scope.yml", quiet);
 }
 
 test("missing mcpServers preserves default visibility for every server", () => {

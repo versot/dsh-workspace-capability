@@ -6,21 +6,21 @@
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#f7f8fb" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0b0e14" media="(prefers-color-scheme: dark)">
-<title>Workspace Skill Scope — DeepSeek Harness</title>
+<title>Workspace Capability — DeepSeek Harness</title>
 <meta name="description" content="为 DeepSeek Harness 提供按工作区的 Skill 与整台 MCP Server 可见性，以及只能继承或收窄的子 Agent 作用域。">
-<link rel="canonical" href="https://versot.github.io/dsh-workspace-skill-scope/zh/">
-<link rel="alternate" hreflang="en" href="https://versot.github.io/dsh-workspace-skill-scope/">
-<link rel="alternate" hreflang="zh-Hans" href="https://versot.github.io/dsh-workspace-skill-scope/zh/">
-<link rel="alternate" hreflang="x-default" href="https://versot.github.io/dsh-workspace-skill-scope/">
-<meta property="og:title" content="Workspace Skill Scope">
+<link rel="canonical" href="https://versot.github.io/dsh-workspace-capability/zh/">
+<link rel="alternate" hreflang="en" href="https://versot.github.io/dsh-workspace-capability/">
+<link rel="alternate" hreflang="zh-Hans" href="https://versot.github.io/dsh-workspace-capability/zh/">
+<link rel="alternate" hreflang="x-default" href="https://versot.github.io/dsh-workspace-capability/">
+<meta property="og:title" content="Workspace Capability">
 <meta property="og:description" content="为 DeepSeek Harness 提供按工作区的 Skill 与整台 MCP Server 可见性。">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:locale:alternate" content="en">
-<meta property="og:url" content="https://versot.github.io/dsh-workspace-skill-scope/zh/">
-<meta property="og:image" content="https://versot.github.io/dsh-workspace-skill-scope/icon.png">
+<meta property="og:url" content="https://versot.github.io/dsh-workspace-capability/zh/">
+<meta property="og:image" content="https://versot.github.io/dsh-workspace-capability/icon.png">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Workspace Skill Scope">
+<meta name="twitter:title" content="Workspace Capability">
 <meta name="twitter:description" content="为 DeepSeek Harness 提供按工作区的 Skill 与整台 MCP Server 可见性。">
 <link rel="icon" href="../icon.png">
 <link rel="stylesheet" href="../assets/site.css">
@@ -29,7 +29,7 @@
 <a class="skip" href="#main">跳到正文</a>
 <header class="topbar">
   <nav class="wrap nav" aria-label="主导航">
-    <a class="brand" href="#top"><img src="../icon.png" alt=""><span>Workspace Skill Scope</span></a>
+    <a class="brand" href="#top"><img src="../icon.png" alt=""><span>Workspace Capability</span></a>
     <div class="navlinks">
       <a class="nav-text" href="#features">能力</a>
       <a class="nav-text" href="#docs">文档</a>
@@ -39,7 +39,7 @@
         <span aria-hidden="true">|</span>
         <a href="./" hreflang="zh-Hans" lang="zh-CN" aria-current="page">中文</a>
       </span>
-      <a class="github" href="https://github.com/versot/dsh-workspace-skill-scope">GitHub ↗</a>
+      <a class="github" href="https://github.com/versot/dsh-workspace-capability">GitHub ↗</a>
     </div>
   </nav>
 </header>
@@ -57,11 +57,11 @@
         <p class="lede">按工作区控制 Skill 与整台 MCP Server 的可见性，并让子 Agent 的作用域只能继承或收窄。配置可读、行为可解释、状态可观察。</p>
         <div class="actions">
           <a class="button primary" href="#install">开始安装</a>
-          <a class="button" href="https://github.com/versot/dsh-workspace-skill-scope#readme">阅读完整 README</a>
+          <a class="button" href="https://github.com/versot/dsh-workspace-capability#readme">阅读完整 README</a>
         </div>
       </div>
       <div class="terminal" aria-label="示例配置">
-        <div class="terminal-bar"><i></i><i></i><i></i><span>.dsh/skill-scope.yml</span></div>
+        <div class="terminal-bar"><i></i><i></i><i></i><span>.dsh/capability-scope.yml</span></div>
         <pre><code><span class="comment"># Skill 来源</span>
 <span class="key">projectSkills</span>: <span class="value">true</span>
 <span class="key">userSkills</span>: <span class="value">false</span>
@@ -118,7 +118,7 @@
         <article class="doc-block" id="policy">
           <span class="kicker">01 · Policy</span>
           <h2>策略语义</h2>
-          <p>策略文件位于 <code>&lt;工作区&gt;/.dsh/skill-scope.yml</code>。文件不存在时保持标准行为：全部来源与 MCP Server 默认可用。</p>
+          <p>策略文件位于 <code>&lt;工作区&gt;/.dsh/capability-scope.yml</code>。文件不存在时保持标准行为：全部来源与 MCP Server 默认可用。</p>
           <div class="codebox">
             <div class="label"><span>Skill 判定顺序</span><span>优先 → 兜底</span></div>
             <pre><code><span class="key">deny</span> → <span class="key">include</span> → <span class="key">allow</span>（非空时）→ 来源组开关</code></pre>
@@ -147,7 +147,7 @@
         <article class="doc-block" id="panel">
           <span class="kicker">03 · Observability</span>
           <h2>面板与运行状态</h2>
-          <p>从会话行 <strong>「⋯」→「工作区 Skill 与 MCP…」</strong> 打开清单。离线但已配置的 Server 会保留显示，避免保存其他设置时丢失策略。</p>
+          <p>从会话行 <strong>「⋯」→「工作区能力范围…」</strong> 打开清单。离线但已配置的 Server 会保留显示，避免保存其他设置时丢失策略。</p>
           <div class="status">
             <div><code>skillFilterInstalled</code><span>共享 Skill Filter 是否已安装</span></div>
             <div><code>mcpFilterInstalled</code><span>共享 MCP Filter 是否完整安装</span></div>
@@ -179,7 +179,7 @@
           <p>安装后重启 DSH，然后从任意会话的菜单打开配置面板。</p>
           <div class="codebox">
             <div class="label"><span>Shell</span><span>GitHub source</span></div>
-            <pre><code>dsh plugin --profile &lt;profile&gt; add github:versot/dsh-workspace-skill-scope</code></pre>
+            <pre><code>dsh plugin --profile &lt;profile&gt; add github:versot/dsh-workspace-capability</code></pre>
           </div>
         </div>
         <div class="version"><strong>v1.0.0</strong><span>Node ≥ 22.12.0</span></div>
@@ -192,10 +192,10 @@
   <div class="wrap footer-row">
     <span>MIT © 2026 versot · Built for DeepSeek Harness</span>
     <div class="footer-links">
-      <a href="https://github.com/versot/dsh-workspace-skill-scope">GitHub</a>
-      <a href="https://github.com/versot/dsh-workspace-skill-scope#readme">README</a>
-      <a href="https://github.com/versot/dsh-workspace-skill-scope/blob/main/docs/VERIFICATION.md">验证记录</a>
-      <a href="https://raw.githubusercontent.com/versot/dsh-workspace-skill-scope/main/market/index.json">市场索引</a>
+      <a href="https://github.com/versot/dsh-workspace-capability">GitHub</a>
+      <a href="https://github.com/versot/dsh-workspace-capability#readme">README</a>
+      <a href="https://github.com/versot/dsh-workspace-capability/blob/main/docs/VERIFICATION.md">验证记录</a>
+      <a href="https://raw.githubusercontent.com/versot/dsh-workspace-capability/main/market/index.json">市场索引</a>
     </div>
   </div>
 </footer>

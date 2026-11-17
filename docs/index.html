@@ -6,21 +6,21 @@
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#f7f8fb" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0b0e14" media="(prefers-color-scheme: dark)">
-<title>Workspace Skill Scope — DeepSeek Harness</title>
+<title>Workspace Capability — DeepSeek Harness</title>
 <meta name="description" content="Per-workspace Skill and whole-MCP-server visibility for DeepSeek Harness, with child Agents that can only inherit or narrow their scope.">
-<link rel="canonical" href="https://versot.github.io/dsh-workspace-skill-scope/">
-<link rel="alternate" hreflang="en" href="https://versot.github.io/dsh-workspace-skill-scope/">
-<link rel="alternate" hreflang="zh-Hans" href="https://versot.github.io/dsh-workspace-skill-scope/zh/">
-<link rel="alternate" hreflang="x-default" href="https://versot.github.io/dsh-workspace-skill-scope/">
-<meta property="og:title" content="Workspace Skill Scope">
+<link rel="canonical" href="https://versot.github.io/dsh-workspace-capability/">
+<link rel="alternate" hreflang="en" href="https://versot.github.io/dsh-workspace-capability/">
+<link rel="alternate" hreflang="zh-Hans" href="https://versot.github.io/dsh-workspace-capability/zh/">
+<link rel="alternate" hreflang="x-default" href="https://versot.github.io/dsh-workspace-capability/">
+<meta property="og:title" content="Workspace Capability">
 <meta property="og:description" content="Per-workspace Skill and whole-MCP-server visibility for DeepSeek Harness.">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="en">
 <meta property="og:locale:alternate" content="zh_CN">
-<meta property="og:url" content="https://versot.github.io/dsh-workspace-skill-scope/">
-<meta property="og:image" content="https://versot.github.io/dsh-workspace-skill-scope/icon.png">
+<meta property="og:url" content="https://versot.github.io/dsh-workspace-capability/">
+<meta property="og:image" content="https://versot.github.io/dsh-workspace-capability/icon.png">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Workspace Skill Scope">
+<meta name="twitter:title" content="Workspace Capability">
 <meta name="twitter:description" content="Per-workspace Skill and whole-MCP-server visibility for DeepSeek Harness.">
 <link rel="icon" href="icon.png">
 <link rel="stylesheet" href="assets/site.css">
@@ -29,7 +29,7 @@
 <a class="skip" href="#main">Skip to content</a>
 <header class="topbar">
   <nav class="wrap nav" aria-label="Main">
-    <a class="brand" href="#top"><img src="icon.png" alt=""><span>Workspace Skill Scope</span></a>
+    <a class="brand" href="#top"><img src="icon.png" alt=""><span>Workspace Capability</span></a>
     <div class="navlinks">
       <a class="nav-text" href="#features">Features</a>
       <a class="nav-text" href="#docs">Docs</a>
@@ -39,7 +39,7 @@
         <span aria-hidden="true">|</span>
         <a href="./zh/" hreflang="zh-Hans" lang="zh-CN">中文</a>
       </span>
-      <a class="github" href="https://github.com/versot/dsh-workspace-skill-scope">GitHub ↗</a>
+      <a class="github" href="https://github.com/versot/dsh-workspace-capability">GitHub ↗</a>
     </div>
   </nav>
 </header>
@@ -57,11 +57,11 @@
         <p class="lede">Decide which Skills and which complete MCP servers a workspace can see, and keep every child Agent inside its parent's scope. Readable policy, explainable behaviour, observable state.</p>
         <div class="actions">
           <a class="button primary" href="#install">Get started</a>
-          <a class="button" href="https://github.com/versot/dsh-workspace-skill-scope#readme">Read the README</a>
+          <a class="button" href="https://github.com/versot/dsh-workspace-capability#readme">Read the README</a>
         </div>
       </div>
       <div class="terminal" aria-label="Example configuration">
-        <div class="terminal-bar"><i></i><i></i><i></i><span>.dsh/skill-scope.yml</span></div>
+        <div class="terminal-bar"><i></i><i></i><i></i><span>.dsh/capability-scope.yml</span></div>
         <pre><code><span class="comment"># Skill sources</span>
 <span class="key">projectSkills</span>: <span class="value">true</span>
 <span class="key">userSkills</span>: <span class="value">false</span>
@@ -118,7 +118,7 @@
         <article class="doc-block" id="policy">
           <span class="kicker">01 · Policy</span>
           <h2>Policy semantics</h2>
-          <p>The policy lives at <code>&lt;workspace&gt;/.dsh/skill-scope.yml</code>. When the file is absent, standard behaviour applies: every source and every MCP server stays available.</p>
+          <p>The policy lives at <code>&lt;workspace&gt;/.dsh/capability-scope.yml</code>. When the file is absent, standard behaviour applies: every source and every MCP server stays available.</p>
           <div class="codebox">
             <div class="label"><span>Skill resolution order</span><span>first match wins</span></div>
             <pre><code><span class="key">deny</span> → <span class="key">include</span> → <span class="key">allow</span> <span class="comment">(when non-empty)</span> → source group switch</code></pre>
@@ -147,7 +147,7 @@
         <article class="doc-block" id="panel">
           <span class="kicker">03 · Observability</span>
           <h2>Panel and status</h2>
-          <p>Open the checklist from the session row: <strong>「⋯」→「工作区 Skill 与 MCP…」</strong>. Servers that are configured but currently offline stay listed, so saving unrelated settings never drops them.</p>
+          <p>Open the checklist from the session row: <strong>「⋯」→「工作区能力范围…」</strong>. Servers that are configured but currently offline stay listed, so saving unrelated settings never drops them.</p>
           <div class="status">
             <div><code>skillFilterInstalled</code><span>whether the shared Skill filter is installed</span></div>
             <div><code>mcpFilterInstalled</code><span>whether the shared MCP filter is fully installed</span></div>
@@ -179,7 +179,7 @@
           <p>Restart DSH after installing, then open the panel from any session's row menu.</p>
           <div class="codebox">
             <div class="label"><span>Shell</span><span>GitHub source</span></div>
-            <pre><code>dsh plugin --profile &lt;profile&gt; add github:versot/dsh-workspace-skill-scope</code></pre>
+            <pre><code>dsh plugin --profile &lt;profile&gt; add github:versot/dsh-workspace-capability</code></pre>
           </div>
         </div>
         <div class="version"><strong>v1.0.0</strong><span>Node ≥ 22.12.0</span></div>
@@ -192,10 +192,10 @@
   <div class="wrap footer-row">
     <span>MIT © 2026 versot · Built for DeepSeek Harness</span>
     <div class="footer-links">
-      <a href="https://github.com/versot/dsh-workspace-skill-scope">GitHub</a>
-      <a href="https://github.com/versot/dsh-workspace-skill-scope#readme">README</a>
-      <a href="https://github.com/versot/dsh-workspace-skill-scope/blob/main/docs/VERIFICATION.md">Verification</a>
-      <a href="https://raw.githubusercontent.com/versot/dsh-workspace-skill-scope/main/market/index.json">Market index</a>
+      <a href="https://github.com/versot/dsh-workspace-capability">GitHub</a>
+      <a href="https://github.com/versot/dsh-workspace-capability#readme">README</a>
+      <a href="https://github.com/versot/dsh-workspace-capability/blob/main/docs/VERIFICATION.md">Verification</a>
+      <a href="https://raw.githubusercontent.com/versot/dsh-workspace-capability/main/market/index.json">Market index</a>
     </div>
   </div>
 </footer>

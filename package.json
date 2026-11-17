@@ -1,16 +1,16 @@
 {
-  "name": "dsh-workspace-skill-scope",
+  "name": "dsh-workspace-capability",
   "version": "1.0.0",
   "description": "Per-workspace Skill and whole-MCP-server visibility for DeepSeek Harness, with child-Agent scope narrowing.",
   "license": "MIT",
   "author": "versot",
-  "homepage": "https://github.com/versot/dsh-workspace-skill-scope#readme",
+  "homepage": "https://github.com/versot/dsh-workspace-capability#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/versot/dsh-workspace-skill-scope.git"
+    "url": "git+https://github.com/versot/dsh-workspace-capability.git"
   },
   "bugs": {
-    "url": "https://github.com/versot/dsh-workspace-skill-scope/issues"
+    "url": "https://github.com/versot/dsh-workspace-capability/issues"
   },
   "keywords": [
     "dsh-plugin",

@@ -1,6 +1,6 @@
 {
   "meta": {
-    "title": "工作区 Skill 作用域",
-    "description": "按工作区控制 Skill 和整台 MCP Server 的可见性，并让子 Agent 的作用域只能继承或缩小。"
+    "title": "工作区能力范围",
+    "description": "按工作区控制 Skill 与整台 MCP Server 的可见性，并让子 Agent 的作用域只能继承或收窄。"
   }
 }

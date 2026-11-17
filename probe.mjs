@@ -1,9 +1,9 @@
 /**
- * Standalone probe for dsh-workspace-skill-scope.
+ * Standalone probe for dsh-workspace-capability.
  *
  * Loads this package the way the Loader does and fakes the `skills` service, then
  * prints the catalog one workspace would receive. Use it to check
- * `<workspace>/.dsh/skill-scope.yml` without restarting the app or opening a session.
+ * `<workspace>/.dsh/capability-scope.yml` without restarting the app or opening a session.
  *
  * Usage: node probe.mjs [workspace-dir]
  *

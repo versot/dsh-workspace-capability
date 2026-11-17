@@ -6,11 +6,11 @@
  * the shared filter for every preset and existing Session. This export remains
  * available for compatibility with explicit provider compositions.
  *
- * @module dsh-workspace-skill-scope/provider
+ * @module dsh-workspace-capability/provider
  */
 import { WorkspaceScopeProvider, trackWorkspaceProvider } from "./catalog.js";
 
-export const name = "workspace-skill-scope";
+export const name = "workspace-capability";
 export const inject = ["skills"];
 
 /**
@@ -28,5 +28,5 @@ export function apply(ctx) {
   ctx.effect(() => () => {
     untrack?.();
     provider?.dispose();
-  }, "workspace-skill-scope watcher");
+  }, "workspace-capability watcher");
 }

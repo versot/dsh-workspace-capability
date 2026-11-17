@@ -11,7 +11,7 @@
  * runtime Skills. Workspace discovery failures fail open; persisted Agent
  * policy failures fail closed in AgentSkillScopes.
  *
- * @module dsh-workspace-skill-scope/filter
+ * @module dsh-workspace-capability/filter
  */
 import { collectWorkspaceCatalog } from "./catalog.js";
 
@@ -101,7 +101,7 @@ export function installSkillFilter(ctx, skills, agentScopes) {
       };
     }
   } catch (error) {
-    ctx?.logger?.warn?.(`workspace-skill-scope: cannot filter the shared skill service: ${messageOf(error)}`);
+    ctx?.logger?.warn?.(`workspace-capability: cannot filter the shared skill service: ${messageOf(error)}`);
     return () => {};
   }
 

@@ -1,6 +1,6 @@
 # Workspace skill scope bundle.
 #
-# The workspace policy lives in <workspace>/.dsh/skill-scope.yml and is enforced
+# The workspace policy lives in <workspace>/.dsh/capability-scope.yml and is enforced
 # by the Host row below: it installs a filter on the shared `skills` service, so
 # every preset — 标准 / PTC / 极简 / 创造, and sessions older than this bundle —
 # sees the same filtered catalog. No preset is declared and the default preset
@@ -11,6 +11,6 @@
     # makes the workspace policy apply to EVERY preset. It must be the BARE
     # package name: client-modules only inspects an active row whose specifier is
     # a plain package id, and that row is how DSH finds this package's `./client`.
-    - id: workspace-skill-scope-host
-      name: 'dsh-workspace-skill-scope'
+    - id: workspace-capability-host
+      name: 'dsh-workspace-capability'
 

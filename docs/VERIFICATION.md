@@ -11,24 +11,24 @@
 | Node.js | 24.21.0（`runtime/primary-runtime`） |
 | pnpm | 11.28.5（安装器内置） |
 | 平台 | macOS（arm64） |
-| 安装源 | `github:versot/dsh-workspace-skill-scope` 默认分支 |
+| 安装源 | `github:versot/dsh-workspace-capability` 默认分支 |
 
 ## 1. 安装
 
 ```bash
 export DSH_HOME="$(mktemp -d)"
-dsh plugin --profile web add github:versot/dsh-workspace-skill-scope
+dsh plugin --profile web add github:versot/dsh-workspace-capability
 ```
 
 观察到的 `profiles/web/package.json`：
 
 ```json
 {
-  "dependencies": { "dsh-workspace-skill-scope": "github:versot/dsh-workspace-skill-scope" },
+  "dependencies": { "dsh-workspace-capability": "github:versot/dsh-workspace-capability" },
   "dsh": { "profile": { "bundles": [
     "@deepseek-ai/dsh-base",
     "@deepseek-ai/dsh-web-app",
-    "dsh-workspace-skill-scope"
+    "dsh-workspace-capability"
   ] } }
 }
 ```
@@ -38,8 +38,8 @@ dsh plugin --profile web add github:versot/dsh-workspace-skill-scope
 `dsh --profile web --dump-config` 中的入口行：
 
 ```yaml
-- id: workspace-skill-scope-host
-  name: dsh-workspace-skill-scope
+- id: workspace-capability-host
+  name: dsh-workspace-capability
 ```
 
 ## 2. 启动
@@ -52,7 +52,7 @@ dsh --profile web --no-open --host 127.0.0.1 --port 0
 首屏请求（同源，无需额外凭据）：
 
 ```bash
-curl 'http://127.0.0.1:53573/dsh-workspace-skill-scope/catalog?workspace=<url-encoded-workspace>'
+curl 'http://127.0.0.1:53573/dsh-workspace-capability/catalog?workspace=<url-encoded-workspace>'
 ```
 
 ```json
@@ -74,7 +74,7 @@ HTTP 200；`skillFilterInstalled: true` 说明共享 `skills` 过滤层已装上
 ## 3. 卸载
 
 ```bash
-dsh plugin --profile web remove dsh-workspace-skill-scope
+dsh plugin --profile web remove dsh-workspace-capability
 ```
 
 `profiles/web/package.json` 回到：
@@ -99,7 +99,7 @@ dsh plugin --profile web remove dsh-workspace-skill-scope
 | 白名单交集 | `skills: [<父 Agent 可见名称>]` | 子 Agent 仅看到“工作区可见集合 ∩ 显式名单” |
 | 未知名称 | 名单含不存在的名称 | 整个 spawn 请求被拒绝，不静默忽略 |
 | 隐藏名称 | 名单含已被工作区策略隐藏、父 Agent 当前不可见的名称 | 整个 spawn 请求被拒绝；验证不能绕过父 Agent 当前可见目录 |
-| 持久化 | 完成一次带作用域的 spawn | 工作区 `.dsh/agent-skill-scopes.json` 记录解析后的策略 |
+| 持久化 | 完成一次带作用域的 spawn | 工作区 `.dsh/agent-scopes.json` 记录解析后的策略 |
 | 重启恢复 | 带作用域 spawn 后重启 DSH | 记录存在时，子 Agent 仍使用原目录限制 |
 | 存储丢失或损坏 | 删除或破坏 JSON 后重启 | 记录丢失时退回普通工作区目录；已找到但损坏时零 skill，并明确这不是安全边界 |
 | 后代不扩大 | 受限子 Agent 再调用 `subagent_with_skills` | 后代不能选择父级当前不可见的名称 |

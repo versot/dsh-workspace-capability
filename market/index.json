@@ -1,12 +1,12 @@
 {
   "format": 1,
   "title": {
-    "en": "Workspace Skill Scope",
-    "zh": "工作区 Skill 作用域"
+    "en": "Workspace Capability",
+    "zh": "工作区能力范围"
   },
   "description": {
     "en": "Per-workspace Skill and whole-MCP-server visibility for DeepSeek Harness.",
-    "zh": "按工作区控制 Skill 与整台 MCP Server 的可见性。"
+    "zh": "按工作区控制 Skill 与整台 MCP Server 的可见性，并让子 Agent 的作用域只能继承或收窄。"
   },
   "metadata": {
     "categories": {
@@ -28,14 +28,14 @@
   },
   "plugins": [
     {
-      "name": "dsh-workspace-skill-scope",
+      "name": "dsh-workspace-capability",
       "title": {
-        "en": "Workspace Skill Scope",
-        "zh": "工作区 Skill 作用域"
+        "en": "Workspace Capability",
+        "zh": "工作区能力范围"
       },
       "description": {
-        "en": "One .dsh/skill-scope.yml per workspace controls visible Skills and complete MCP server namespaces. Includes a session-menu panel and child-Agent scope narrowing, and applies to every preset and existing Session.",
-        "zh": "每个工作区一份 .dsh/skill-scope.yml 控制可见 Skill 与完整 MCP Server 命名空间；提供会话菜单面板和子 Agent 作用域收窄，并对所有 preset 与已有会话生效。"
+        "en": "One .dsh/capability-scope.yml per workspace controls visible Skills and complete MCP server namespaces. Includes a session-menu panel and child-Agent scope narrowing, and applies to every preset and existing Session.",
+        "zh": "每个工作区一份 .dsh/capability-scope.yml 控制可见 Skill 与完整 MCP Server 命名空间；提供会话菜单面板和子 Agent 作用域收窄，并对所有 preset 与已有会话生效。"
       },
       "author": "versot",
       "metadata": {
@@ -47,7 +47,7 @@
           "skill",
           "mcp",
           "workspace",
-          "skill-scope",
+          "capability-scope",
           "child-agent",
           "checklist"
         ]
@@ -58,7 +58,7 @@
           "publishTimestamp": 1794900989,
           "source": {
             "type": "git",
-            "url": "https://github.com/versot/dsh-workspace-skill-scope.git",
+            "url": "https://github.com/versot/dsh-workspace-capability.git",
             "commit": "1771e769198bc3a372b987be1767f4559352e314"
           },
           "engines": {
@@ -68,9 +68,9 @@
       ],
       "repository": {
         "type": "git",
-        "url": "https://github.com/versot/dsh-workspace-skill-scope"
+        "url": "https://github.com/versot/dsh-workspace-capability"
       },
-      "homepage": "https://github.com/versot/dsh-workspace-skill-scope#readme"
+      "homepage": "https://github.com/versot/dsh-workspace-capability#readme"
     }
   ]
 }

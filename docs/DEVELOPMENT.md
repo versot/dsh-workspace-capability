@@ -9,9 +9,9 @@
 | `mcp-scope.js` | 按 `mcp__<server>__<tool>` 整台过滤共享工具服务的读路径与 resolved tool set；安装过程事务式回滚，状态通过 `mcpFilterInstalled` 单独报告 |
 | `agent-scopes.js` | 持久化子 Agent 的 Skill/MCP 范围并注册 `subagent_with_skills`；省略 MCP 参数时快照父 Agent 当前可见 Server，保证后代范围不扩大 |
 | `provider.js` | preset 半侧（`./provider`）：注册 `WorkspaceScopeProvider`。**当前没有行引用它**——preset 声明已删除，保留是为了将来想恢复「某个模式自带 provider」时不用重写 |
-| `index.js` | Host 半侧（包根）：注册 `/dsh-workspace-skill-scope` 路由、安装 `filter.js`。必须挂在**裸包名**那一行——`client-modules` 只扫裸包名的 active row 来发现 `./client` |
+| `index.js` | Host 半侧（包根）：注册 `/dsh-workspace-capability` 路由、安装 `filter.js`。必须挂在**裸包名**那一行——`client-modules` 只扫裸包名的 active row 来发现 `./client` |
 | `client.js` | 浏览器半侧：会话行「⋯」菜单项 + 面板（`shell.overlay` 自绘浮层，不用 `Modal` 的固定窄宽） |
-| `cordis.patch.yml` | bundle 层：只插入一行 Host 行 `workspace-skill-scope-host`；不声明 preset，也不改默认 preset |
+| `cordis.patch.yml` | bundle 层：只插入一行 Host 行 `workspace-capability-host`；不声明 preset，也不改默认 preset |
 | `market/index.json` | 应用内插件市场的索引条目（format 1） |
 | `docs/index.html`, `docs/icon.png` | GitHub Pages 落地页与其图标 |
 
@@ -43,7 +43,7 @@
 | `[]` | 子 Agent 零 skill |
 | 非空数组 | 仅使用父 Agent 当前可见集合与该数组的交集 |
 
-解析后的子 Agent 策略持久化在工作区 `.dsh/agent-skill-scopes.json`。这是目录可见性限制，不是安全沙箱：
+解析后的子 Agent 策略持久化在工作区 `.dsh/agent-scopes.json`。这是目录可见性限制，不是安全沙箱：
 能修改工作区状态的主体可以破坏它，存储被删除后重启也会退回普通工作区目录。`fork` 还可能从历史继承已加载的
 skill 内容，因此调用方不能把任何一条路径当作权限边界。
 
@@ -75,8 +75,8 @@ DSH_BUNDLED_SKILL_DIR=/tmp/dsh-bundled-skills/dsh/node_modules/@deepseek-ai/dsh-
 起一个临时 profile（bundles 只放 base + web-app + 本包），然后：
 
 ```bash
-curl 'http://127.0.0.1:<port>/dsh-workspace-skill-scope/catalog?workspace=<编码后的工作区路径>'
-curl -X POST 'http://127.0.0.1:<port>/dsh-workspace-skill-scope/policy' \
+curl 'http://127.0.0.1:<port>/dsh-workspace-capability/catalog?workspace=<编码后的工作区路径>'
+curl -X POST 'http://127.0.0.1:<port>/dsh-workspace-capability/policy' \
   -H 'content-type: application/json' \
   --data '{"workspace":"<路径>","config":{"projectSkills":true,"userSkills":false,"bundled":true,"allow":[],"deny":["beta"]}}'
 ```

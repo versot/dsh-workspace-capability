@@ -5,7 +5,7 @@ import { dirname, join, resolve } from "node:path";
 import { findWorkspaceRoot } from "./catalog.js";
 import { MCP_SERVER_NAME_PATTERN, parseMcpToolName } from "./mcp-scope.js";
 
-const STORE_SEGMENTS = [".dsh", "agent-skill-scopes.json"];
+const STORE_SEGMENTS = [".dsh", "agent-scopes.json"];
 const SKILL_NAME = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 export class AgentSkillScopes {
@@ -60,7 +60,7 @@ export class AgentSkillScopes {
           return policy;
         }
       } catch (error) {
-        this.ctx.logger?.warn?.(`workspace-skill-scope: cannot restore Agent Skill policy for ${id}: ${messageOf(error)}`);
+        this.ctx.logger?.warn?.(`workspace-capability: cannot restore Agent Skill policy for ${id}: ${messageOf(error)}`);
         return Object.freeze({ skills: Object.freeze([]), mcpServers: Object.freeze([]) });
       }
     }

@@ -1,6 +1,6 @@
 {
   "meta": {
-    "title": "Workspace Skill Scope",
+    "title": "Workspace Capability",
     "description": "Controls per-workspace Skill and whole-MCP-server visibility, with child-Agent scopes that can only inherit or narrow."
   }
 }

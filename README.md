@@ -1,4 +1,4 @@
-# dsh-workspace-skill-scope
+# dsh-workspace-capability
 
 [English](README.en.md) | 中文
 
@@ -6,23 +6,23 @@
 
 <img src="icon.png" width="72" height="72" alt="">
 
-按工作区控制会话能看到哪些 Skill 和整台 MCP Server：每个工作区一份 `.dsh/skill-scope.yml`，会话行菜单里勾选。
+按工作区控制会话能看到哪些 Skill 和整台 MCP Server：每个工作区一份 `.dsh/capability-scope.yml`，会话行菜单里勾选。
 **对所有 preset 生效**（标准 / PTC / 极简 / 创造），也包括插件安装之前就存在的老会话。
 
 ## 安装
 
 ```bash
-dsh plugin --profile <profile> add github:versot/dsh-workspace-skill-scope
+dsh plugin --profile <profile> add github:versot/dsh-workspace-capability
 ```
 
-装完重启 DSH，会话行「⋯」里会出现「工作区 Skill 与 MCP…」。也可以装本地包：
-`dsh plugin --profile <profile> add ./dsh-workspace-skill-scope-<version>.tgz`。
+装完重启 DSH，会话行「⋯」里会出现「工作区能力范围…」。也可以装本地包：
+`dsh plugin --profile <profile> add ./dsh-workspace-capability-<version>.tgz`。
 
 需要 DSH `>= 0.2.2-rc.3`（`engines.dsh`，更低版本拒绝加载）与 Node `>= 22.12.0`。
 
 ## 配置
 
-`<工作区>/.dsh/skill-scope.yml`，文件不存在时行为与标准模式完全一致（全部可用）：
+`<工作区>/.dsh/capability-scope.yml`，文件不存在时行为与标准模式完全一致（全部可用）：
 
 ```yaml
 projectSkills: true    # <工作区>/.dsh/skills、<工作区>/.agents/skills
@@ -57,15 +57,15 @@ mcpServers: [comfyui]  # 可选；只放行整台 comfyui Server；省略 = 全�
 - `skills: []`：创建零 skill 的子 Agent；
 - 传入非空数组：仅暴露交集中的 skill；
 - `mcpServers` 同样可省略（继承）、传 `[]`（无 MCP）或传 Server 名数组；有效范围是 `工作区可见 ∩ 父 Agent 可见 ∩ 显式选择`；
-- 策略持久化到工作区的 `.dsh/agent-skill-scopes.json`，旧版 Skill-only 记录兼容并默认继承全部父级可见 MCP Server。
+- 策略持久化到工作区的 `.dsh/agent-scopes.json`，旧版 Skill-only 记录兼容并默认继承全部父级可见 MCP Server。
 
 这是对 spawn 子 Agent 的 **Skill 可见性限制**，不是安全沙箱或权限边界。它依赖工作区内的
-`.dsh/agent-skill-scopes.json`；能修改或删除该文件的主体也能破坏限制。`fork` 还可能从历史中继承已经加载的
+`.dsh/agent-scopes.json`；能修改或删除该文件的主体也能破坏限制。`fork` 还可能从历史中继承已经加载的
 skill 内容，因此也不能用作隔离手段。
 
 ## 面板
 
-会话行 **「⋯」→ 工作区 Skill 与 MCP…**：Skill 组/单项和每台 MCP Server 各有勾选框，背后就是上面那份 YAML。保存时先写入同目录临时文件，再通过 `rename` 替换目标文件、刷新已挂载的 provider，然后自动关闭面板；替换语义当前仅在 macOS 验证，其他平台尚未验证。
+会话行 **「⋯」→ 工作区能力范围…**：Skill 组/单项和每台 MCP Server 各有勾选框，背后就是上面那份 YAML。保存时先写入同目录临时文件，再通过 `rename` 替换目标文件、刷新已挂载的 provider，然后自动关闭面板；替换语义当前仅在 macOS 验证，其他平台尚未验证。
 
 - 组关掉后仍可单独勾选某个 skill（写进 `include`）；
 - 全部勾上 = 与标准模式完全一致；
@@ -79,8 +79,8 @@ skill 内容，因此也不能用作隔离手段。
 | 能力 | 用在哪 | 边界 |
 | --- | --- | --- |
 | 读取文件 | 扫四个 skill 根与内置目录 | 只读 `SKILL.md` 及其 frontmatter |
-| 写入文件 | `<工作区>/.dsh/skill-scope.yml` 与 `.dsh/agent-skill-scopes.json` | 同目录临时文件后通过 `rename` 替换；非法输入不写入；替换语义当前仅在 macOS 验证 |
-| 网络 | DSH 自带 `webServer` 上的同源前缀 `/dsh-workspace-skill-scope` | 不访问任何外部服务，无遥测 |
+| 写入文件 | `<工作区>/.dsh/capability-scope.yml` 与 `.dsh/agent-scopes.json` | 同目录临时文件后通过 `rename` 替换；非法输入不写入；替换语义当前仅在 macOS 验证 |
+| 网络 | DSH 自带 `webServer` 上的同源前缀 `/dsh-workspace-capability` | 不访问任何外部服务，无遥测 |
 | 会话信息 | session id → 工作区路径（`workspaceRegistry`，退回 `sessions`） | 只读，不落盘、不外传，不读凭据 |
 | 子进程 / Shell | 无 | — |
 | 生命周期脚本 | 无 | 安装期不执行代码 |
@@ -88,14 +88,14 @@ skill 内容，因此也不能用作隔离手段。
 唯一运行依赖 `yaml@^2.9.0`，锁定在 `pnpm-lock.yaml`（当前 `yaml@2.9.1`，带 integrity）。
 
 失败边界：工作区目录扫描异常 fail-open；已找到但损坏或不可读的白名单存储会 fail-closed（零 skill）；
-写文件失败保留原文件且不启动子 Agent；DSH 低于 `0.2.2-rc.3` 拒绝加载。`.dsh/agent-skill-scopes.json` 是可见性限制状态的一部分，迁移工作区时必须一并保留；若它被删除，插件无法区分“从未限制”和“记录丢失”，重启后相关 Agent 会退回普通工作区目录。
+写文件失败保留原文件且不启动子 Agent；DSH 低于 `0.2.2-rc.3` 拒绝加载。`.dsh/agent-scopes.json` 是可见性限制状态的一部分，迁移工作区时必须一并保留；若它被删除，插件无法区分“从未限制”和“记录丢失”，重启后相关 Agent 会退回普通工作区目录。
 
 ## 已知边界
 
 - 跨 preset 的过滤是包在共享 `skills` 服务上的（`filter.js` 改写 `list`/`snapshot`/`get`），属于非官方扩展点；
   DSH 大版本升级后可能失效，失效时面板会分别报告 `skillFilterInstalled: false` 或 `mcpFilterInstalled: false`，不会静默假装在过滤。
 - 只过滤插件扫描根里的名字；Host 级 skill（Desktop 注入的 office 系列等）不受控制，面板里也不显示。
-- 项目根 = 最近的含 `.git`、`.dsh/skill-scope.yml`、`.dsh/skills` 或 `.agents/skills` 的祖先目录；
+- 项目根 = 最近的含 `.git`、`.dsh/capability-scope.yml`、`.dsh/skills` 或 `.agents/skills` 的祖先目录；
   把新工作区建在已有工作区里面会继承它的策略。
 - 面板入口依赖 0.2.x 的 UI slot（`sidebar.workspaces.session.menu.item`、`shell.overlay`）；
   更老的版本上过滤仍生效，只是没有菜单项。
@@ -103,10 +103,10 @@ skill 内容，因此也不能用作隔离手段。
 ## 卸载
 
 ```bash
-dsh plugin --profile <profile> remove dsh-workspace-skill-scope
+dsh plugin --profile <profile> remove dsh-workspace-capability
 ```
 
-工作区里的 `.dsh/skill-scope.yml` 可以留着，没有插件时它不起作用。
+工作区里的 `.dsh/capability-scope.yml` 可以留着，没有插件时它不起作用。
 
 ## 开发与维护
 

@@ -1,6 +1,6 @@
 # 发布 / 分发
 
-包名 `dsh-workspace-skill-scope`，`engines.dsh >=0.2.2-rc.3`、`engines.node >=22.12.0`。
+包名 `dsh-workspace-capability`，`engines.dsh >=0.2.2-rc.3`、`engines.node >=22.12.0`。
 
 ## npm（仅本地人工发布）
 
@@ -23,8 +23,8 @@ git push origin v<version>
 ## GitHub（免 npm）
 
 ```bash
-dsh plugin --profile <profile> add github:versot/dsh-workspace-skill-scope
-dsh plugin --profile <profile> add github:versot/dsh-workspace-skill-scope#<40位commit>
+dsh plugin --profile <profile> add github:versot/dsh-workspace-capability
+dsh plugin --profile <profile> add github:versot/dsh-workspace-capability#<40位commit>
 ```
 
 索引里的 git 条目必须固定到 40 位 commit（不能写分支名）。代价是每次发版都要更新 commit 与 version。
@@ -37,7 +37,7 @@ dsh plugin --profile <profile> add github:versot/dsh-workspace-skill-scope#<40�
 - 条目里的 `publishTimestamp` 要改成真实发布时间；
 - 默认 `source` 是 npm；改用 git 时写 `{"type":"git","url":"…","commit":"<sha>"}`；
 - 目前可直接用 raw 地址：
-  `https://raw.githubusercontent.com/versot/dsh-workspace-skill-scope/main/market/index.json`
+  `https://raw.githubusercontent.com/versot/dsh-workspace-capability/main/market/index.json`
 
 ## DSH Hub（dshhub.org）
 

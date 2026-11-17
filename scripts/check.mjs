@@ -17,7 +17,7 @@ function check(condition, message) {
 
 const pkg = JSON.parse(readFileSync("package.json", "utf8"));
 
-check(pkg.name === "dsh-workspace-skill-scope", `package name is "${pkg.name}"`);
+check(pkg.name === "dsh-workspace-capability", `package name is "${pkg.name}"`);
 check(/^\d+\.\d+\.\d+/.test(pkg.version), `version "${pkg.version}" is not semver`);
 check(typeof pkg.engines?.dsh === "string", "engines.dsh is missing");
 check(pkg.dsh?.bundle?.patch === "./cordis.patch.yml", "dsh.bundle.patch must point at cordis.patch.yml");

@@ -99,7 +99,7 @@ export function installMcpToolFilter(ctx, tools, agentScopes, policies) {
       }
     }
     const suffix = rollbackFailures.length === 0 ? "" : `; rollback failed for ${rollbackFailures.join(", ")}`;
-    ctx?.logger?.warn?.(`workspace-skill-scope: cannot filter shared MCP tools: ${messageOf(error)}${suffix}`);
+    ctx?.logger?.warn?.(`workspace-capability: cannot filter shared MCP tools: ${messageOf(error)}${suffix}`);
     return () => {};
   }
 

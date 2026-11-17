@@ -15,7 +15,7 @@ function agent(id, cwd) { return { id, session: { header: { cwd } } }; }
 
 test("version 1 records restore Skills and inherit all MCP servers", async (t) => {
   const root = await workspace(); t.after(() => rm(root, { recursive: true, force: true }));
-  await writeFile(join(root, ".dsh", "agent-skill-scopes.json"), JSON.stringify({
+  await writeFile(join(root, ".dsh", "agent-scopes.json"), JSON.stringify({
     version: 1, agents: { child: { version: 1, skills: ["alpha"] } },
   }));
   const scopes = new AgentSkillScopes(context());
@@ -31,14 +31,14 @@ test("version 2 records preserve explicit empty and selected MCP scopes", async 
   await scopes.put(root, "some", { skills: ["alpha"], mcpServers: ["comfyui"] });
   assert.deepEqual(await scopes.get(agent("none", root), root), { skills: [], mcpServers: [] });
   assert.deepEqual(await scopes.get(agent("some", root), root), { skills: ["alpha"], mcpServers: ["comfyui"] });
-  const stored = JSON.parse(await readFile(join(root, ".dsh", "agent-skill-scopes.json"), "utf8"));
+  const stored = JSON.parse(await readFile(join(root, ".dsh", "agent-scopes.json"), "utf8"));
   assert.equal(stored.version, 2);
   assert.equal(stored.agents.some.version, 2);
 });
 
 test("invalid stored MCP policy fails closed", async (t) => {
   const root = await workspace(); t.after(() => rm(root, { recursive: true, force: true }));
-  await writeFile(join(root, ".dsh", "agent-skill-scopes.json"), JSON.stringify({
+  await writeFile(join(root, ".dsh", "agent-scopes.json"), JSON.stringify({
     version: 2, agents: { child: { version: 2, skills: ["alpha"], mcpServers: ["bad name"] } },
   }));
   const scopes = new AgentSkillScopes(context());
@@ -51,7 +51,7 @@ test("remove clears memory and durable child policy", async (t) => {
   await scopes.put(root, "child", { skills: ["alpha"], mcpServers: ["github"] });
   await scopes.remove(root, "child");
   assert.equal(scopes.getSync({ id: "child" }), undefined);
-  const stored = JSON.parse(await readFile(join(root, ".dsh", "agent-skill-scopes.json"), "utf8"));
+  const stored = JSON.parse(await readFile(join(root, ".dsh", "agent-scopes.json"), "utf8"));
   assert.equal(stored.agents.child, undefined);
 });
 
@@ -81,7 +81,7 @@ test("omitted MCP selection snapshots the parent-visible servers", async (t) => 
     { description: "inherit MCP scope", prompt: "check" },
     { agent: parent, signal: new AbortController().signal },
   );
-  const stored = JSON.parse(await readFile(join(root, ".dsh", "agent-skill-scopes.json"), "utf8"));
+  const stored = JSON.parse(await readFile(join(root, ".dsh", "agent-scopes.json"), "utf8"));
   const child = Object.values(stored.agents)[0];
   assert.deepEqual(child.mcpServers, ["github"]);
 });
