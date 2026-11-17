@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f7f8fb" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0b0e14" media="(prefers-color-scheme: dark)">
+<title>Workspace Skill Scope — DeepSeek Harness</title>
+<meta name="description" content="为 DeepSeek Harness 提供按工作区的 Skill 与整台 MCP Server 可见性，以及只能继承或收窄的子 Agent 作用域。">
+<link rel="canonical" href="https://versot.github.io/dsh-workspace-skill-scope/zh/">
+<link rel="alternate" hreflang="en" href="https://versot.github.io/dsh-workspace-skill-scope/">
+<link rel="alternate" hreflang="zh-Hans" href="https://versot.github.io/dsh-workspace-skill-scope/zh/">
+<link rel="alternate" hreflang="x-default" href="https://versot.github.io/dsh-workspace-skill-scope/">
+<meta property="og:title" content="Workspace Skill Scope">
+<meta property="og:description" content="为 DeepSeek Harness 提供按工作区的 Skill 与整台 MCP Server 可见性。">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:locale:alternate" content="en">
+<meta property="og:url" content="https://versot.github.io/dsh-workspace-skill-scope/zh/">
+<meta property="og:image" content="https://versot.github.io/dsh-workspace-skill-scope/icon.png">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Workspace Skill Scope">
+<meta name="twitter:description" content="为 DeepSeek Harness 提供按工作区的 Skill 与整台 MCP Server 可见性。">
+<link rel="icon" href="../icon.png">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#main">跳到正文</a>
+<header class="topbar">
+  <nav class="wrap nav" aria-label="主导航">
+    <a class="brand" href="#top"><img src="../icon.png" alt=""><span>Workspace Skill Scope</span></a>
+    <div class="navlinks">
+      <a class="nav-text" href="#features">能力</a>
+      <a class="nav-text" href="#docs">文档</a>
+      <a class="nav-text" href="#install">安装</a>
+      <span class="lang" role="group" aria-label="语言">
+        <a href="../" hreflang="en" lang="en">English</a>
+        <span aria-hidden="true">|</span>
+        <a href="./" hreflang="zh-Hans" lang="zh-CN" aria-current="page">中文</a>
+      </span>
+      <a class="github" href="https://github.com/versot/dsh-workspace-skill-scope">GitHub ↗</a>
+    </div>
+  </nav>
+</header>
+
+<main id="main">
+  <section class="hero" id="top">
+    <div class="wrap hero-grid">
+      <div>
+        <div class="eyebrow">
+          <span class="badge"><span class="dot"></span> v1.0.0</span>
+          <span class="badge">DeepSeek Harness ≥ 0.2.2-rc.3</span>
+          <span class="badge">MIT</span>
+        </div>
+        <h1>让每个工作区拥有<br><span class="gradient">清晰的能力边界</span></h1>
+        <p class="lede">按工作区控制 Skill 与整台 MCP Server 的可见性，并让子 Agent 的作用域只能继承或收窄。配置可读、行为可解释、状态可观察。</p>
+        <div class="actions">
+          <a class="button primary" href="#install">开始安装</a>
+          <a class="button" href="https://github.com/versot/dsh-workspace-skill-scope#readme">阅读完整 README</a>
+        </div>
+      </div>
+      <div class="terminal" aria-label="示例配置">
+        <div class="terminal-bar"><i></i><i></i><i></i><span>.dsh/skill-scope.yml</span></div>
+        <pre><code><span class="comment"># Skill 来源</span>
+<span class="key">projectSkills</span>: <span class="value">true</span>
+<span class="key">userSkills</span>: <span class="value">false</span>
+<span class="key">bundled</span>: <span class="value">true</span>
+
+<span class="comment"># 名称级规则</span>
+<span class="key">allow</span>: []
+<span class="key">deny</span>: [legacy-skill]
+<span class="key">include</span>: [prompt-optimizer]
+
+<span class="comment"># 整台 Server，不细分到工具</span>
+<span class="key">mcpServers</span>: [time, github]</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="features">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="kicker">What it solves</span>
+        <h2>一份策略，覆盖完整的 Agent 能力面</h2>
+        <p>不改默认 preset，不要求重建旧会话；策略从共享服务层应用到所有模式。</p>
+      </div>
+      <div class="cards">
+        <article class="card">
+          <div class="icon">S</div>
+          <h3>工作区级 Skill</h3>
+          <p>分别控制项目、用户与内置 Skill，可使用白名单、排除项和跨组保留项。</p>
+        </article>
+        <article class="card">
+          <div class="icon">M</div>
+          <h3>整台 MCP Server</h3>
+          <p>按 <code>mcp__&lt;server&gt;__*</code> 命名空间过滤；一台 Server 的工具一起显示或隐藏。</p>
+        </article>
+        <article class="card">
+          <div class="icon" aria-hidden="true">A</div>
+          <h3>子 Agent 只收窄</h3>
+          <p>子 Agent 的有效范围取工作区、父 Agent 和显式选择的交集，后代不会意外扩权。</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="docs">
+    <div class="wrap docs-grid">
+      <aside class="toc" aria-label="页内目录">
+        <strong>本页内容</strong>
+        <a href="#policy">策略语义</a>
+        <a href="#child-agent">子 Agent</a>
+        <a href="#panel">面板与状态</a>
+        <a href="#boundaries">边界与保证</a>
+      </aside>
+      <div>
+        <article class="doc-block" id="policy">
+          <span class="kicker">01 · Policy</span>
+          <h2>策略语义</h2>
+          <p>策略文件位于 <code>&lt;工作区&gt;/.dsh/skill-scope.yml</code>。文件不存在时保持标准行为：全部来源与 MCP Server 默认可用。</p>
+          <div class="codebox">
+            <div class="label"><span>Skill 判定顺序</span><span>优先 → 兜底</span></div>
+            <pre><code><span class="key">deny</span> → <span class="key">include</span> → <span class="key">allow</span>（非空时）→ 来源组开关</code></pre>
+          </div>
+          <p><code>mcpServers</code> 省略表示允许当前及以后连接的全部 Server；空数组表示隐藏全部 MCP 工具；名称数组表示只放行指定的完整 Server。</p>
+          <div class="note"><strong>粒度原则：</strong>插件刻意不提供单个 MCP 工具的开关。Server 是稳定、可理解的最小策略单元。</div>
+        </article>
+
+        <article class="doc-block" id="child-agent">
+          <span class="kicker">02 · Delegation</span>
+          <h2>子 Agent 作用域</h2>
+          <p><code>subagent_with_skills</code> 创建 spawn 子 Agent，并同时接受可选的 <code>skills</code> 与 <code>mcpServers</code>。最终范围遵循同一条规则：</p>
+          <div class="rule" aria-label="作用域交集规则">
+            <div class="rule-item">工作区可见</div><span class="rule-op" aria-hidden="true">∩</span>
+            <div class="rule-item">父 Agent 可见</div><span class="rule-op" aria-hidden="true">∩</span>
+            <div class="rule-item">显式选择</div>
+          </div>
+          <ul>
+            <li>省略参数：快照并继承父 Agent 当前可见范围；</li>
+            <li>传入 <code>[]</code>：对应类型不提供任何能力；</li>
+            <li>显式名称：任何未知或父级不可见名称都会拒绝整个请求。</li>
+          </ul>
+          <div class="note"><strong>安全边界：</strong>这是能力可见性限制，不是操作系统安全沙箱。能修改工作区策略文件的主体也能改变限制。</div>
+        </article>
+
+        <article class="doc-block" id="panel">
+          <span class="kicker">03 · Observability</span>
+          <h2>面板与运行状态</h2>
+          <p>从会话行 <strong>「⋯」→「工作区 Skill 与 MCP…」</strong> 打开清单。离线但已配置的 Server 会保留显示，避免保存其他设置时丢失策略。</p>
+          <div class="status">
+            <div><code>skillFilterInstalled</code><span>共享 Skill Filter 是否已安装</span></div>
+            <div><code>mcpFilterInstalled</code><span>共享 MCP Filter 是否完整安装</span></div>
+            <div><code>connected</code><span>该 Server 当前是否注册了工具</span></div>
+          </div>
+          <p>任何 Filter 未完整安装时，面板会显示独立警告，而不是静默宣称策略已生效。</p>
+        </article>
+
+        <article class="doc-block" id="boundaries">
+          <span class="kicker">04 · Operational notes</span>
+          <h2>边界与保证</h2>
+          <ul>
+            <li>工作区扫描异常时 fail-open，避免会话意外变成零 Skill；损坏的子 Agent 作用域记录 fail-closed。</li>
+            <li>MCP 包装安装具备完整回滚；不会留下只有部分工具读路径被过滤的状态。</li>
+            <li>策略先写入同目录临时文件，再通过 <code>rename</code> 替换；替换语义当前仅在 macOS 验证。</li>
+            <li>不访问外部服务、无遥测、无生命周期脚本；网络仅用于 DSH 自带 Web Server 的同源面板接口。</li>
+          </ul>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="install">
+    <div class="wrap">
+      <div class="install">
+        <div>
+          <span class="kicker">Installation</span>
+          <h2>安装到你的 DSH Profile</h2>
+          <p>安装后重启 DSH，然后从任意会话的菜单打开配置面板。</p>
+          <div class="codebox">
+            <div class="label"><span>Shell</span><span>GitHub source</span></div>
+            <pre><code>dsh plugin --profile &lt;profile&gt; add github:versot/dsh-workspace-skill-scope</code></pre>
+          </div>
+        </div>
+        <div class="version"><strong>v1.0.0</strong><span>Node ≥ 22.12.0</span></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap footer-row">
+    <span>MIT © 2026 versot · Built for DeepSeek Harness</span>
+    <div class="footer-links">
+      <a href="https://github.com/versot/dsh-workspace-skill-scope">GitHub</a>
+      <a href="https://github.com/versot/dsh-workspace-skill-scope#readme">README</a>
+      <a href="https://github.com/versot/dsh-workspace-skill-scope/blob/main/docs/VERIFICATION.md">验证记录</a>
+      <a href="https://raw.githubusercontent.com/versot/dsh-workspace-skill-scope/main/market/index.json">市场索引</a>
+    </div>
+  </div>
+</footer>
+</body>
+</html>
