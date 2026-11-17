@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { AgentSkillScopes } from "../agent-scopes.js";
+import { AgentSkillScopes, installSkilledSubagentTool } from "../agent-scopes.js";
 
 async function workspace() {
   const root = await mkdtemp(join(tmpdir(), "dsh-scope-"));
@@ -53,4 +53,35 @@ test("remove clears memory and durable child policy", async (t) => {
   assert.equal(scopes.getSync({ id: "child" }), undefined);
   const stored = JSON.parse(await readFile(join(root, ".dsh", "agent-skill-scopes.json"), "utf8"));
   assert.equal(stored.agents.child, undefined);
+});
+
+test("omitted MCP selection snapshots the parent-visible servers", async (t) => {
+  const root = await workspace(); t.after(() => rm(root, { recursive: true, force: true }));
+  const parent = agent("parent", root);
+  let definition;
+  const ctx = {
+    workingDirectory: { ensure: async () => root },
+    skills: { list: async () => [] },
+    tools: {
+      definitions: () => [
+        { name: "bash" },
+        { name: "mcp__github__issue" },
+        { name: "mcp__github__repo" },
+      ],
+      register(value) { definition = value; return () => {}; },
+    },
+    subagents: {
+      resolveMaxDepth: () => 2,
+      startActivation: async ({ childId }) => ({ name: `child-${childId}` }),
+    },
+  };
+  const scopes = new AgentSkillScopes(context());
+  installSkilledSubagentTool(ctx, scopes);
+  await definition.execute(
+    { description: "inherit MCP scope", prompt: "check" },
+    { agent: parent, signal: new AbortController().signal },
+  );
+  const stored = JSON.parse(await readFile(join(root, ".dsh", "agent-skill-scopes.json"), "utf8"));
+  const child = Object.values(stored.agents)[0];
+  assert.deepEqual(child.mcpServers, ["github"]);
 });

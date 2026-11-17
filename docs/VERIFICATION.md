@@ -58,13 +58,18 @@ curl 'http://127.0.0.1:53573/dsh-workspace-skill-scope/catalog?workspace=<url-en
 ```json
 {
   "filterInstalled": true,
+  "skillFilterInstalled": true,
+  "mcpFilterInstalled": true,
+  "mcpServers": [
+    { "name": "time", "toolCount": 3, "connected": true, "visible": true }
+  ],
   "visible": ["rendezvous-shot-maker", "script-writing-studio",
               "agent-experience", "cordis-composition-reference",
               "cordis-plugin-development", "editing-cordis-compositions"]
 }
 ```
 
-HTTP 200；`filterInstalled: true` 说明共享 `skills` 服务的过滤层已装上。
+HTTP 200；`skillFilterInstalled: true` 说明共享 `skills` 过滤层已装上，`mcpFilterInstalled: true` 说明共享 MCP 工具过滤已完整装上。`filterInstalled` 只保留为 Skill Filter 的旧客户端兼容字段。策略中已有但暂时离线的 Server 仍应出现在 `mcpServers`，且为 `toolCount: 0, connected: false`。
 
 ## 3. 卸载
 

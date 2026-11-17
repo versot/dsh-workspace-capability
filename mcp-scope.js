@@ -23,6 +23,12 @@ export function mcpServerVisible(config, serverName) {
 }
 
 const installedTools = new WeakSet();
+let activeCount = 0;
+
+/** Whether at least one shared tool service has a complete MCP filter installed. */
+export function isMcpToolFilterActive() {
+  return activeCount > 0;
+}
 
 /**
  * Filter the shared DSH tool registry at discovery and execution lookup paths.
@@ -84,14 +90,28 @@ export function installMcpToolFilter(ctx, tools, agentScopes, policies) {
       });
     };
   } catch (error) {
-    ctx?.logger?.warn?.(`workspace-skill-scope: cannot filter shared MCP tools: ${messageOf(error)}`);
+    const rollbackFailures = [];
+    for (const [name, original] of Object.entries(originals)) {
+      try {
+        tools[name] = original;
+      } catch (rollbackError) {
+        rollbackFailures.push(`${name}: ${messageOf(rollbackError)}`);
+      }
+    }
+    const suffix = rollbackFailures.length === 0 ? "" : `; rollback failed for ${rollbackFailures.join(", ")}`;
+    ctx?.logger?.warn?.(`workspace-skill-scope: cannot filter shared MCP tools: ${messageOf(error)}${suffix}`);
     return () => {};
   }
 
   installedTools.add(tools);
+  activeCount += 1;
+  let active = true;
   return () => {
+    if (!active) return;
+    active = false;
     for (const [name, original] of Object.entries(originals)) tools[name] = original;
     installedTools.delete(tools);
+    activeCount = Math.max(0, activeCount - 1);
   };
 }
 

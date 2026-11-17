@@ -27,7 +27,7 @@ import {
   readWorkspaceConfig,
 } from "./catalog.js";
 import { installSkillFilter, isSkillFilterActive } from "./filter.js";
-import { installMcpToolFilter } from "./mcp-scope.js";
+import { installMcpToolFilter, isMcpToolFilterActive } from "./mcp-scope.js";
 import { AgentSkillScopes, installSkilledSubagentTool } from "./agent-scopes.js";
 
 export const name = "workspace-skill-scope-host";
@@ -73,7 +73,7 @@ export function apply(ctx) {
   // Lazy: a headless or minimal composition has no webServer, and a top-level
   // inject would leave this row pending forever. The filter above does not need
   // it; the route appears when (and if) the service does.
-  ctx.inject(["webServer"], (webCtx) => {
+  ctx.inject(["webServer", "tools"], (webCtx) => {
     webCtx.effect(
       () =>
         webCtx.webServer.register({
@@ -216,21 +216,28 @@ function createMcpPolicyResolver(ctx) {
 }
 
 /** Attach whether the every-session filter is live, so the panel can warn when it is not. */
-function withFilterState(catalog, ctx) {
+export function withFilterState(catalog, ctx) {
   const servers = new Map();
   for (const definition of ctx.tools?.definitions?.() ?? []) {
     const match = /^mcp__([A-Za-z0-9_-]{1,32})__.+$/.exec(definition.name);
     if (match === null) continue;
     servers.set(match[1], (servers.get(match[1]) ?? 0) + 1);
   }
+  for (const name of catalog.config.mcpServers ?? []) {
+    if (!servers.has(name)) servers.set(name, 0);
+  }
+  const skillFilterInstalled = isSkillFilterActive();
   return {
     ...catalog,
     mcpServers: [...servers].sort(([a], [b]) => a.localeCompare(b)).map(([name, toolCount]) => ({
       name,
       toolCount,
+      connected: toolCount > 0,
       visible: catalog.config.mcpServers === undefined || catalog.config.mcpServers.includes(name),
     })),
-    filterInstalled: isSkillFilterActive(),
+    filterInstalled: skillFilterInstalled,
+    skillFilterInstalled,
+    mcpFilterInstalled: isMcpToolFilterActive(),
   };
 }
 

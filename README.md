@@ -70,7 +70,8 @@ skill 内容，因此也不能用作隔离手段。
 
 - 组关掉后仍可单独勾选某个 skill（写进 `include`）；
 - 全部勾上 = 与标准模式完全一致；
-- 若共享过滤没装上，面板顶部会红字提示 `filterInstalled: false`。
+- 面板分别报告 `skillFilterInstalled` 与 `mcpFilterInstalled`；任一共享过滤没装完整时都会显示对应红色警告；旧客户端仍可读取兼容字段 `filterInstalled`（仅代表 Skill Filter）；
+- 策略中已经选中但当前未连接的 MCP Server 会以“当前未连接”保留显示，保存其他设置不会静默删除它。
 
 ## 权限与外部服务
 
@@ -93,7 +94,7 @@ skill 内容，因此也不能用作隔离手段。
 ## 已知边界
 
 - 跨 preset 的过滤是包在共享 `skills` 服务上的（`filter.js` 改写 `list`/`snapshot`/`get`），属于非官方扩展点；
-  DSH 大版本升级后可能失效，失效时面板会报 `filterInstalled: false`，不会静默假装在过滤。
+  DSH 大版本升级后可能失效，失效时面板会分别报告 `skillFilterInstalled: false` 或 `mcpFilterInstalled: false`，不会静默假装在过滤。
 - 只过滤插件扫描根里的名字；Host 级 skill（Desktop 注入的 office 系列等）不受控制，面板里也不显示。
 - 项目根 = 最近的含 `.git`、`.dsh/skill-scope.yml`、`.dsh/skills` 或 `.agents/skills` 的祖先目录；
   把新工作区建在已有工作区里面会继承它的策略。

@@ -1,6 +1,6 @@
 {
   "meta": {
     "title": "工作区 Skill 作用域",
-    "description": "用工作区里的 .dsh/skill-scope.yml 决定该工作区的会话能看到哪些 skill。"
+    "description": "按工作区控制 Skill 和整台 MCP Server 的可见性，并让子 Agent 的作用域只能继承或缩小。"
   }
 }

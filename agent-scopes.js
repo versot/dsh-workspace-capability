@@ -161,9 +161,9 @@ export function installSkilledSubagentTool(ctx, scopes) {
         return parsed === undefined ? [] : [parsed.serverName];
       }));
       const selectedMcpServers = args.mcpServers === undefined
-        ? undefined
+        ? Object.freeze([...visibleMcpServers])
         : validateMcpServers(args.mcpServers);
-      const unavailableMcp = (selectedMcpServers ?? []).filter((server) => !visibleMcpServers.has(server));
+      const unavailableMcp = selectedMcpServers.filter((server) => !visibleMcpServers.has(server));
       if (unavailableMcp.length > 0) {
         throw new Error(`MCP servers are unknown or hidden by the workspace/parent policy: ${unavailableMcp.join(", ")}`);
       }

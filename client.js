@@ -450,7 +450,13 @@ window.__ModuleLoader__.load({
                 onChange: () => toggleMcpServer(server.name),
               }),
               h('span', { style: allowed.has(server.name) ? styles.name : styles.hiddenName }, server.name),
-              h('span', { style: styles.description }, `${server.toolCount} 个工具（整台 Server 一起控制）`),
+              h(
+                'span',
+                { style: styles.description },
+                server.connected === false
+                  ? '当前未连接（保留既有配置）'
+                  : `${server.toolCount} 个工具（整台 Server 一起控制）`,
+              ),
             )),
       );
     }
@@ -476,11 +482,18 @@ window.__ModuleLoader__.load({
             h('span', { key: 'v', style: styles.path }, data.file),
             h('span', { key: 's', style: { flex: '0 0 auto' } }, data.fileExists ? '' : '（不存在 = 全部可用）'),
           ]),
-          data.filterInstalled === false
+          (data.skillFilterInstalled ?? data.filterInstalled) === false
             ? h(
                 'div',
-                { key: 'nofilter', style: { color: '#b91c1c' } },
-                '注意：所有会话使用的共享 Skill 过滤没有装上；当前策略不会可靠地应用到会话目录。请重新加载插件并确认版本兼容。',
+                { key: 'no-skill-filter', style: { color: '#b91c1c' } },
+                '注意：所有会话使用的共享 Skill 过滤没有装上；当前 Skill 策略不会可靠地应用。请重新加载插件并确认版本兼容。',
+              )
+            : null,
+          data.mcpFilterInstalled === false
+            ? h(
+                'div',
+                { key: 'no-mcp-filter', style: { color: '#b91c1c' } },
+                '注意：共享 MCP 工具过滤没有完整装上；当前 MCP Server 策略不会可靠地应用。请重新加载插件并确认版本兼容。',
               )
             : null,
           draft.allow.length > 0

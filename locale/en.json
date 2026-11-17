@@ -1,6 +1,6 @@
 {
   "meta": {
     "title": "Workspace Skill Scope",
-    "description": "Decides which skills each workspace can use from .dsh/skill-scope.yml, so one workspace never sees another's skill set."
+    "description": "Controls per-workspace Skill and whole-MCP-server visibility, with child-Agent scopes that can only inherit or narrow."
   }
 }

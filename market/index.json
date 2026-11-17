@@ -5,8 +5,8 @@
     "zh": "工作区 Skill 作用域"
   },
   "description": {
-    "en": "Per-workspace skill visibility for DeepSeek Harness.",
-    "zh": "按工作区控制会话可见的 skill。"
+    "en": "Per-workspace Skill and whole-MCP-server visibility for DeepSeek Harness.",
+    "zh": "按工作区控制 Skill 与整台 MCP Server 的可见性。"
   },
   "metadata": {
     "categories": {
@@ -34,8 +34,8 @@
         "zh": "工作区 Skill 作用域"
       },
       "description": {
-        "en": "One .dsh/skill-scope.yml per workspace decides which skills a session can see, with a checklist panel in the session menu. Applies to every preset, including sessions created before the plugin was installed.",
-        "zh": "每个工作区一份 .dsh/skill-scope.yml 决定会话能看到哪些 skill，会话行菜单里有勾选面板；对所有 preset 生效，含插件安装前创建的老会话。"
+        "en": "One .dsh/skill-scope.yml per workspace controls visible Skills and complete MCP server namespaces. Includes a session-menu panel and child-Agent scope narrowing, and applies to every preset and existing Session.",
+        "zh": "每个工作区一份 .dsh/skill-scope.yml 控制可见 Skill 与完整 MCP Server 命名空间；提供会话菜单面板和子 Agent 作用域收窄，并对所有 preset 与已有会话生效。"
       },
       "author": "versot",
       "metadata": {
@@ -45,8 +45,10 @@
         ],
         "keywords": [
           "skill",
+          "mcp",
           "workspace",
           "skill-scope",
+          "child-agent",
           "checklist"
         ]
       },

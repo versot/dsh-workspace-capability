@@ -85,7 +85,7 @@ conversation history and is not an isolation mechanism.
 
 Session row **「⋯」→ 工作区 Skill 与 MCP…** opens a checklist: Skill groups/items
 and one checkbox per complete MCP server, backed by the YAML above. Saving rewrites the file atomically, refreshes
-the mounted providers, and closes the panel.
+the mounted providers, and closes the panel. Configured servers that are currently disconnected remain listed as offline, so unrelated saves do not discard them. The API and panel report `skillFilterInstalled` and `mcpFilterInstalled` separately; `filterInstalled` remains a compatibility alias for the Skill filter.
 
 ## How it works
 
@@ -124,9 +124,9 @@ disposable profile is in [docs/VERIFICATION.md](docs/VERIFICATION.md).
 
 ## Caveats
 
-- The cross-preset filter wraps an internal service, not a documented extension
-  point. A DSH upgrade can break it; when it does, the panel shows
-  `filterInstalled: false` instead of silently pretending to filter.
+- The cross-preset filters wrap internal services, not documented extension
+  points. A DSH upgrade can break them; when it does, the panel separately shows
+  `skillFilterInstalled: false` or `mcpFilterInstalled: false` instead of silently pretending to filter.
 - Workspace scan failures fail open; corrupt or unreadable per-Agent allowlist storage fails closed.
 - Workspace policy only controls scan-root Skills. An explicit child-Agent allowlist filters the final complete catalog too, including Desktop/runtime Skills.
 - The project root is the nearest ancestor with `.git`, `.dsh/skill-scope.yml`,
