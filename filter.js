@@ -64,7 +64,7 @@ export function installSkillFilter(ctx, skills, agentScopes) {
 
   async function agentAllowlist(options) {
     if (agentScopes === undefined || options?.scope === undefined) return undefined;
-    return agentScopes.get(options.scope, options.cwd);
+    return (await agentScopes.get(options.scope, options.cwd))?.skills;
   }
 
   function filterResult(result, managed, allowlist) {

@@ -24,8 +24,10 @@ import {
   findWorkspaceRoot,
   invalidateWorkspaceProviders,
   normalizeConfig,
+  readWorkspaceConfig,
 } from "./catalog.js";
 import { installSkillFilter, isSkillFilterActive } from "./filter.js";
+import { installMcpToolFilter } from "./mcp-scope.js";
 import { AgentSkillScopes, installSkilledSubagentTool } from "./agent-scopes.js";
 
 export const name = "workspace-skill-scope-host";
@@ -51,6 +53,14 @@ export function apply(ctx) {
   ctx.inject(["skills"], (skillsCtx) => {
     const restore = installSkillFilter(skillsCtx, skillsCtx.skills, agentScopes);
     skillsCtx.effect(() => () => restore(), "workspace-skill-scope: shared catalog filter");
+  });
+
+  ctx.inject(["tools", "workingDirectory"], (toolCtx) => {
+    const policies = createMcpPolicyResolver(toolCtx);
+    toolCtx.effect(
+      () => installMcpToolFilter(toolCtx, toolCtx.tools, agentScopes, policies),
+      "workspace-skill-scope: shared MCP tool filter",
+    );
   });
 
   ctx.inject(["tools", "subagents", "skills", "workingDirectory", "sessions"], (toolCtx) => {
@@ -179,6 +189,29 @@ async function savePolicy(ctx, req, res) {
   // private cache. Announce after the response is ready so the current save is
   // never reported as failed merely because another listener throws.
   ctx.emit("plugin-manager/changed", { reason: "plugin" });
+}
+
+function createMcpPolicyResolver(ctx) {
+  const cache = new WeakMap();
+  return {
+    policyForSync(agent) {
+      return agent === undefined ? undefined : cache.get(agent);
+    },
+    async policyFor(agent, signal) {
+      if (agent === undefined) return undefined;
+      const cwd = await ctx.workingDirectory.ensure(agent, signal);
+      try {
+        const root = await findWorkspaceRoot(cwd);
+        const { config } = await readWorkspaceConfig(root, ctx);
+        cache.set(agent, config);
+        return config;
+      } catch (error) {
+        ctx.logger?.warn?.(`workspace-skill-scope: MCP policy ignored for ${cwd}: ${messageOf(error)}`);
+        cache.delete(agent);
+        return undefined;
+      }
+    },
+  };
 }
 
 /** Attach whether the every-session filter is live, so the panel can warn when it is not. */

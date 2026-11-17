@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { mkdir, readFile, rename, unlink, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { findWorkspaceRoot } from "./catalog.js";
+import { MCP_SERVER_NAME_PATTERN, parseMcpToolName } from "./mcp-scope.js";
 
 const STORE_SEGMENTS = [".dsh", "agent-skill-scopes.json"];
 const SKILL_NAME = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -17,6 +18,10 @@ export class AgentSkillScopes {
 
   has(agentId) {
     return this.memory.has(agentId);
+  }
+
+  getSync(agent) {
+    return typeof agent?.id === "string" ? this.memory.get(agent.id) : undefined;
   }
 
   async get(agent, cwd) {
@@ -38,43 +43,38 @@ export class AgentSkillScopes {
             ? inheritedFrom
             : undefined;
         if (policyId !== undefined) {
-          const skills = validateStored(document.agents[policyId]);
+          const policy = validateStored(document.agents[policyId]);
           let policyRoot = root;
           if (policyId !== id) {
             policyRoot = await findWorkspaceRoot(originalCwd ?? cwd ?? root);
             await this.update(policyRoot, (latest) => {
-              latest.agents[id] = {
-                version: 1,
-                skills: [...skills],
-                createdAt: new Date().toISOString(),
+              latest.version = 2;
+              latest.agents[id] = storedPolicy(policy, {
                 parentSessionId: inheritedFrom,
                 inherited: true,
-              };
+              });
             });
           }
-          this.memory.set(id, skills);
+          this.memory.set(id, policy);
           this.roots.set(id, policyRoot);
-          return skills;
+          return policy;
         }
       } catch (error) {
         this.ctx.logger?.warn?.(`workspace-skill-scope: cannot restore Agent Skill policy for ${id}: ${messageOf(error)}`);
-        return [];
+        return Object.freeze({ skills: Object.freeze([]), mcpServers: Object.freeze([]) });
       }
     }
     return undefined;
   }
 
-  async put(cwd, childId, skills, metadata = {}) {
+  async put(cwd, childId, policy, metadata = {}) {
+    const normalized = validatePolicy(policy);
     const root = await findWorkspaceRoot(cwd);
     await this.update(root, (document) => {
-      document.agents[childId] = {
-        version: 1,
-        skills: [...skills],
-        createdAt: new Date().toISOString(),
-        ...typeof metadata.parentSessionId === "string" ? { parentSessionId: metadata.parentSessionId } : {},
-      };
+      document.version = 2;
+      document.agents[childId] = storedPolicy(normalized, metadata);
     });
-    this.memory.set(childId, Object.freeze([...skills]));
+    this.memory.set(childId, normalized);
     this.roots.set(childId, root);
   }
 
@@ -121,6 +121,11 @@ export function installSkilledSubagentTool(ctx, scopes) {
           items: { type: "string" },
           description: "Exact Skill names the child may use. Omit to inherit; [] allows no Skills.",
         },
+        mcpServers: {
+          type: "array",
+          items: { type: "string" },
+          description: "Exact whole MCP server names the child may use. Omit to inherit; [] allows no MCP tools.",
+        },
       },
     },
     output: {
@@ -151,9 +156,20 @@ export function installSkilledSubagentTool(ctx, scopes) {
       if (unavailable.length > 0) {
         throw new Error(`Skills are unknown or hidden by the workspace/parent policy: ${unavailable.join(", ")}`);
       }
+      const visibleMcpServers = new Set(ctx.tools.definitions(parent).flatMap((tool) => {
+        const parsed = parseMcpToolName(tool.name);
+        return parsed === undefined ? [] : [parsed.serverName];
+      }));
+      const selectedMcpServers = args.mcpServers === undefined
+        ? undefined
+        : validateMcpServers(args.mcpServers);
+      const unavailableMcp = (selectedMcpServers ?? []).filter((server) => !visibleMcpServers.has(server));
+      if (unavailableMcp.length > 0) {
+        throw new Error(`MCP servers are unknown or hidden by the workspace/parent policy: ${unavailableMcp.join(", ")}`);
+      }
 
       const childId = randomUUID();
-      await scopes.put(cwd, childId, selected, { parentSessionId: parent.id });
+      await scopes.put(cwd, childId, { skills: selected, mcpServers: selectedMcpServers }, { parentSessionId: parent.id });
       try {
         exec.signal.throwIfAborted();
         const maxDepth = ctx.subagents.resolveMaxDepth();
@@ -191,21 +207,56 @@ function validateRequested(value) {
   return Object.freeze(result);
 }
 
+function validateMcpServers(value) {
+  if (!Array.isArray(value)) throw new Error("mcpServers must be an array");
+  const result = [];
+  const seen = new Set();
+  for (const name of value) {
+    if (typeof name !== "string" || !MCP_SERVER_NAME_PATTERN.test(name)) throw new Error(`invalid MCP server name: ${String(name)}`);
+    if (!seen.has(name)) result.push(name);
+    seen.add(name);
+  }
+  return Object.freeze(result);
+}
+
+function validatePolicy(policy) {
+  if (typeof policy !== "object" || policy === null) throw new Error("invalid Agent policy");
+  return Object.freeze({
+    skills: validateRequested(policy.skills),
+    mcpServers: policy.mcpServers === undefined ? undefined : validateMcpServers(policy.mcpServers),
+  });
+}
+
 function validateStored(record) {
-  if (record?.version !== 1 || !Array.isArray(record.skills)) throw new Error("unsupported Agent Skill policy record");
-  return validateRequested(record.skills);
+  if (record?.version !== 1 && record?.version !== 2) throw new Error("unsupported Agent policy record");
+  if (!Array.isArray(record.skills)) throw new Error("invalid Agent Skill policy record");
+  return validatePolicy({
+    skills: record.skills,
+    mcpServers: record.version === 1 ? undefined : record.mcpServers,
+  });
+}
+
+function storedPolicy(policy, metadata = {}) {
+  return {
+    version: 2,
+    skills: [...policy.skills],
+    ...policy.mcpServers === undefined ? {} : { mcpServers: [...policy.mcpServers] },
+    createdAt: new Date().toISOString(),
+    ...typeof metadata.parentSessionId === "string" ? { parentSessionId: metadata.parentSessionId } : {},
+    ...metadata.inherited === true ? { inherited: true } : {},
+  };
 }
 
 async function readStore(root) {
   const file = join(root, ...STORE_SEGMENTS);
   try {
     const parsed = JSON.parse(await readFile(file, "utf8"));
-    if (parsed?.version !== 1 || typeof parsed.agents !== "object" || parsed.agents === null || Array.isArray(parsed.agents)) {
+    if (![1, 2].includes(parsed?.version) || typeof parsed.agents !== "object" || parsed.agents === null || Array.isArray(parsed.agents)) {
       throw new Error(`invalid Agent Skill policy store: ${file}`);
     }
     return parsed;
   } catch (error) {
-    if (error?.code === "ENOENT") return { version: 1, agents: {} };
+    if (error?.code === "ENOENT") return { version: 2, agents: {} };
     throw error;
   }
 }
