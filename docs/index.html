@@ -3,80 +3,365 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>dsh-workspace-skill-scope — 按工作区控制 skill</title>
-<meta name="description" content="Per-workspace skill visibility for DeepSeek Harness: one .dsh/skill-scope.yml plus a checklist panel, enforced for every preset.">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f7f8fb" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0b0e14" media="(prefers-color-scheme: dark)">
+<title>Workspace Skill Scope — DeepSeek Harness</title>
+<meta name="description" content="为 DeepSeek Harness 提供按工作区的 Skill 与整台 MCP Server 可见性，以及只能继承或收窄的子 Agent 作用域。">
+<meta property="og:title" content="Workspace Skill Scope">
+<meta property="og:description" content="Per-workspace Skill and whole-MCP-server visibility for DeepSeek Harness.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://versot.github.io/dsh-workspace-skill-scope/">
+<meta property="og:image" content="https://versot.github.io/dsh-workspace-skill-scope/icon.png">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Workspace Skill Scope">
+<meta name="twitter:description" content="Per-workspace Skill and whole-MCP-server visibility for DeepSeek Harness.">
+<link rel="icon" href="icon.png">
 <style>
-  :root { color-scheme: dark; }
+  :root {
+    color-scheme: light dark;
+    --bg: #f7f8fb;
+    --surface: rgba(255,255,255,.82);
+    --surface-solid: #fff;
+    --surface-soft: #f0f3f8;
+    --text: #121722;
+    --muted: #5b6474;
+    --faint: #8790a0;
+    --line: #dfe4ec;
+    --line-strong: #cbd2de;
+    --blue: #0878cf;
+    --blue-strong: #005fa8;
+    --blue-soft: #e5f4ff;
+    --cyan: #29b8ea;
+    --green: #16875b;
+    --green-soft: #e5f7ef;
+    --code: #101624;
+    --code-text: #e7edf7;
+    --shadow: 0 16px 45px rgba(18, 34, 58, .08);
+    --radius: 18px;
+    --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    --sans: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0b0e14;
+      --surface: rgba(17,22,32,.84);
+      --surface-solid: #111620;
+      --surface-soft: #171d29;
+      --text: #edf2f8;
+      --muted: #a8b2c2;
+      --faint: #778296;
+      --line: #262e3c;
+      --line-strong: #374154;
+      --blue: #55b8f4;
+      --blue-strong: #8ed2ff;
+      --blue-soft: #102b3c;
+      --cyan: #45c8f2;
+      --green: #58d3a0;
+      --green-soft: #102b23;
+      --code: #080b11;
+      --code-text: #e8eef8;
+      --shadow: 0 18px 48px rgba(0,0,0,.28);
+    }
+  }
   * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 88px; }
   body {
-    margin: 0; background: #0b1220; color: #e2e8f0;
-    font: 16px/1.65 -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Microsoft YaHei", sans-serif;
+    margin: 0;
+    color: var(--text);
+    background:
+      radial-gradient(circle at 12% -8%, rgba(41,184,234,.12), transparent 32rem),
+      radial-gradient(circle at 88% 14%, rgba(8,120,207,.08), transparent 28rem),
+      var(--bg);
+    font: 15.5px/1.72 var(--sans);
+    -webkit-font-smoothing: antialiased;
   }
-  main { max-width: 760px; margin: 0 auto; padding: 72px 24px 96px; }
-  .hero { display: flex; gap: 20px; align-items: center; }
-  .hero svg { width: 72px; height: 72px; flex: 0 0 72px; }
-  h1 { font-size: 30px; line-height: 1.2; margin: 0 0 6px; letter-spacing: -0.02em; }
-  .tagline { color: #94a3b8; margin: 0; }
-  .lede { margin: 28px 0 0; color: #cbd5e1; }
-  h2 { font-size: 16px; text-transform: uppercase; letter-spacing: 0.08em; color: #64748b; margin: 44px 0 12px; }
-  pre {
-    background: #0f172a; border: 1px solid #1e293b; border-radius: 10px;
-    padding: 14px 16px; overflow-x: auto; font-size: 13.5px; line-height: 1.6;
+  a { color: inherit; }
+  code, pre { font-family: var(--mono); }
+  :focus-visible { outline: 3px solid rgba(41,184,234,.55); outline-offset: 3px; border-radius: 6px; }
+  .skip { position: fixed; left: 12px; top: -60px; z-index: 99; padding: 9px 14px; background: var(--surface-solid); border: 1px solid var(--line); border-radius: 10px; }
+  .skip:focus { top: 12px; }
+  .wrap { width: min(1120px, calc(100% - 40px)); margin: 0 auto; }
+  .hero-grid > *, .docs-grid > *, .install > *, .cards > *, .rule > *, .status > *, .doc-block, .codebox, .terminal { min-width: 0; }
+  .card p, .note, .lede, .doc-block > p, .install p, li { overflow-wrap: anywhere; }
+  .topbar {
+    position: sticky; top: 0; z-index: 20;
+    border-bottom: 1px solid color-mix(in srgb, var(--line) 72%, transparent);
+    background: color-mix(in srgb, var(--bg) 78%, transparent);
+    backdrop-filter: blur(18px) saturate(140%);
   }
-  code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
-  p code, li code { background: #16213a; padding: 1px 5px; border-radius: 4px; font-size: 0.9em; }
-  ul { padding-left: 20px; color: #cbd5e1; }
-  a { color: #38bdf8; text-decoration: none; }
-  a:hover { text-decoration: underline; }
-  .links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
-  .links a { border: 1px solid #24304a; padding: 6px 12px; border-radius: 999px; font-size: 14px; }
-  footer { margin-top: 64px; color: #475569; font-size: 13px; }
+  .nav { min-height: 66px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+  .brand { display: flex; align-items: center; gap: 11px; text-decoration: none; font-weight: 700; letter-spacing: -.02em; }
+  .brand img { width: 34px; height: 34px; border-radius: 10px; box-shadow: 0 5px 14px rgba(13,111,178,.18); }
+  .navlinks { display: flex; align-items: center; gap: 22px; color: var(--muted); font-size: 14px; }
+  .navlinks a { text-decoration: none; }
+  .navlinks a:hover { color: var(--text); }
+  .github { padding: 7px 12px; color: var(--text)!important; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+  .hero { padding: 86px 0 70px; position: relative; }
+  .hero-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(330px, .85fr); gap: 64px; align-items: center; }
+  .eyebrow { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 22px; }
+  .badge { display: inline-flex; align-items: center; gap: 7px; padding: 5px 10px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); background: var(--surface); font-size: 12.5px; font-weight: 650; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 4px color-mix(in srgb, var(--green) 14%, transparent); }
+  h1 { max-width: 760px; margin: 0; font-size: clamp(42px, 6vw, 68px); line-height: 1.03; letter-spacing: -.055em; font-weight: 760; }
+  .gradient { color: var(--blue); background: linear-gradient(110deg, var(--blue-strong), var(--cyan)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+  .lede { max-width: 670px; margin: 25px 0 0; color: var(--muted); font-size: clamp(17px, 2vw, 20px); line-height: 1.75; }
+  .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 31px; }
+  .button { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 17px; border: 1px solid var(--line); border-radius: 11px; background: var(--surface); color: var(--text); text-decoration: none; font-weight: 680; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+  .button.primary { color: #fff; border-color: transparent; background: linear-gradient(135deg, #0878cf, #20aee4); box-shadow: 0 9px 22px rgba(8,120,207,.22); }
+  .button:hover { transform: translateY(-1px); border-color: var(--line-strong); }
+  .terminal { position: relative; overflow: hidden; border: 1px solid var(--line); border-radius: 20px; background: var(--code); box-shadow: var(--shadow); }
+  .terminal::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(120deg, rgba(255,255,255,.045), transparent 32%); }
+  .terminal-bar { display: flex; align-items: center; gap: 7px; height: 43px; padding: 0 15px; border-bottom: 1px solid rgba(255,255,255,.08); }
+  .terminal-bar i { width: 8px; height: 8px; border-radius: 50%; background: #4d5667; }
+  .terminal-bar span { margin-left: auto; color: #6e788b; font: 11px var(--mono); }
+  pre { margin: 0; overflow: auto; color: var(--code-text); font-size: 13px; line-height: 1.72; tab-size: 2; }
+  .terminal pre { min-height: 290px; padding: 24px; }
+  .comment { color: #78859a; }
+  .key { color: #67cdf5; }
+  .value { color: #a8dfc4; }
+  .section { padding: 78px 0; border-top: 1px solid var(--line); }
+  .section-head { max-width: 700px; margin-bottom: 34px; }
+  .kicker { color: var(--blue); font-size: 12px; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
+  h2 { margin: 8px 0 10px; font-size: clamp(29px, 4vw, 40px); line-height: 1.15; letter-spacing: -.035em; }
+  .section-head p { margin: 0; color: var(--muted); font-size: 17px; }
+  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .card { padding: 25px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); box-shadow: 0 1px 2px rgba(0,0,0,.02); }
+  .icon { width: 40px; height: 40px; display: grid; place-items: center; margin-bottom: 19px; border-radius: 11px; color: var(--blue); background: var(--blue-soft); font: 700 17px/1 var(--mono); }
+  h3 { margin: 0 0 9px; font-size: 18px; letter-spacing: -.018em; }
+  .card p { margin: 0; color: var(--muted); }
+  .docs-grid { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 52px; align-items: start; }
+  .toc { position: sticky; top: 94px; padding: 17px; border-left: 1px solid var(--line); color: var(--muted); font-size: 14px; }
+  .toc strong { display: block; margin-bottom: 9px; color: var(--text); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; }
+  .toc a { display: block; padding: 5px 0; text-decoration: none; }
+  .toc a:hover { color: var(--blue); }
+  .doc-block + .doc-block { margin-top: 55px; }
+  .doc-block h2 { font-size: 28px; }
+  .doc-block > p { color: var(--muted); }
+  .codebox { margin: 18px 0; border: 1px solid var(--line); border-radius: 14px; background: var(--code); overflow: hidden; }
+  .codebox .label { display: flex; justify-content: space-between; padding: 9px 14px; color: #8e99aa; border-bottom: 1px solid rgba(255,255,255,.08); font: 11px var(--mono); }
+  .codebox pre { padding: 17px 18px; }
+  .rule { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; gap: 12px; align-items: center; margin: 24px 0; }
+  .rule-item { min-height: 90px; display: grid; place-items: center; padding: 13px; text-align: center; border: 1px solid var(--line); border-radius: 14px; background: var(--surface-soft); font-weight: 680; }
+  .rule-op {
+    width: 28px; height: 19px; font-size: 0; color: transparent;
+    border: 2.5px solid var(--faint); border-bottom: 0;
+    border-radius: 999px 999px 0 0;
+  }
+  .note { margin: 20px 0; padding: 15px 17px; border-left: 3px solid var(--blue); border-radius: 0 11px 11px 0; background: var(--blue-soft); color: var(--muted); }
+  .note strong { color: var(--text); }
+  .status { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 22px; }
+  .status > div { padding: 16px; border: 1px solid var(--line); border-radius: 13px; background: var(--surface-soft); }
+  .status code { display: block; color: var(--blue); font-size: 12px; word-break: break-word; }
+  .status span { display: block; margin-top: 5px; color: var(--muted); font-size: 13px; }
+  .install { padding: 34px; display: grid; grid-template-columns: 1fr auto; gap: 30px; align-items: center; border: 1px solid var(--line); border-radius: 22px; background: linear-gradient(140deg, var(--surface-solid), var(--blue-soft)); box-shadow: var(--shadow); }
+  .install h2 { margin-top: 0; }
+  .install p { color: var(--muted); }
+  .install .codebox { margin-bottom: 0; }
+  .version { min-width: 155px; padding: 19px; text-align: center; border: 1px solid var(--line); border-radius: 15px; background: var(--surface); }
+  .version strong { display: block; font: 700 23px var(--mono); }
+  .version span { color: var(--muted); font-size: 12px; }
+  footer { padding: 40px 0 60px; color: var(--faint); font-size: 13px; }
+  .footer-row { display: flex; justify-content: space-between; gap: 20px; align-items: center; }
+  .footer-links { display: flex; flex-wrap: wrap; gap: 17px; }
+  .footer-links a { text-decoration: none; }
+  .footer-links a:hover { color: var(--text); }
+  @media (max-width: 860px) {
+    .hero { padding-top: 60px; }
+    .hero-grid, .docs-grid { grid-template-columns: 1fr; }
+    .hero-grid { gap: 40px; }
+    .cards { grid-template-columns: 1fr; }
+    .toc { display: none; }
+    .terminal { max-width: 620px; }
+  }
+  @media (max-width: 640px) {
+    .wrap { width: min(100% - 28px, 1120px); }
+    .navlinks a:not(.github) { display: none; }
+    .brand span { max-width: 190px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .hero { padding: 48px 0 58px; }
+    h1 { font-size: 41px; }
+    .section { padding: 58px 0; }
+    .rule { grid-template-columns: 1fr; justify-items: center; }
+    .rule-item { width: 100%; }
+    .rule-op { transform: rotate(90deg); }
+    .status { grid-template-columns: 1fr; }
+    .install { grid-template-columns: 1fr; padding: 25px; }
+    .version { justify-self: start; }
+    .footer-row { align-items: flex-start; flex-direction: column; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after { transition: none!important; }
+  }
 </style>
 </head>
 <body>
-<main>
-  <div class="hero">
-    <img src="icon.png" alt="" width="72" height="72" style="width:72px;height:72px;flex:0 0 72px;border-radius:16px">
-    <div>
-      <h1>dsh-workspace-skill-scope</h1>
-      <p class="tagline">按工作区控制会话能看到哪些 skill · Per-workspace skill visibility</p>
+<a class="skip" href="#main">跳到正文</a>
+<header class="topbar">
+  <nav class="wrap nav" aria-label="主导航">
+    <a class="brand" href="#top"><img src="icon.png" alt=""><span>Workspace Skill Scope</span></a>
+    <div class="navlinks">
+      <a href="#features">能力</a>
+      <a href="#docs">文档</a>
+      <a href="#install">安装</a>
+      <a class="github" href="https://github.com/versot/dsh-workspace-skill-scope">GitHub ↗</a>
+    </div>
+  </nav>
+</header>
+
+<main id="main">
+  <section class="hero" id="top">
+    <div class="wrap hero-grid">
+      <div>
+        <div class="eyebrow">
+          <span class="badge"><span class="dot"></span> v1.0.0</span>
+          <span class="badge">DeepSeek Harness ≥ 0.2.2-rc.3</span>
+          <span class="badge">MIT</span>
+        </div>
+        <h1>让每个工作区拥有<br><span class="gradient">清晰的能力边界</span></h1>
+        <p class="lede">按工作区控制 Skill 与整台 MCP Server 的可见性，并让子 Agent 的作用域只能继承或收窄。配置可读、行为可解释、状态可观察。</p>
+        <div class="actions">
+          <a class="button primary" href="#install">开始安装</a>
+          <a class="button" href="https://github.com/versot/dsh-workspace-skill-scope#readme">阅读完整 README</a>
+        </div>
+      </div>
+      <div class="terminal" aria-label="示例配置">
+        <div class="terminal-bar"><i></i><i></i><i></i><span>.dsh/skill-scope.yml</span></div>
+        <pre><code><span class="comment"># Skill 来源</span>
+<span class="key">projectSkills</span>: <span class="value">true</span>
+<span class="key">userSkills</span>: <span class="value">false</span>
+<span class="key">bundled</span>: <span class="value">true</span>
+
+<span class="comment"># 名称级规则</span>
+<span class="key">allow</span>: []
+<span class="key">deny</span>: [legacy-skill]
+<span class="key">include</span>: [prompt-optimizer]
+
+<span class="comment"># 整台 Server，不细分到工具</span>
+<span class="key">mcpServers</span>: [time, github]</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="features">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="kicker">What it solves</span>
+        <h2>一份策略，覆盖完整的 Agent 能力面</h2>
+        <p>不改默认 preset，不要求重建旧会话；策略从共享服务层应用到所有模式。</p>
+      </div>
+      <div class="cards">
+        <article class="card">
+          <div class="icon">S</div>
+          <h3>工作区级 Skill</h3>
+          <p>分别控制项目、用户与内置 Skill，可使用白名单、排除项和跨组保留项。</p>
+        </article>
+        <article class="card">
+          <div class="icon">M</div>
+          <h3>整台 MCP Server</h3>
+          <p>按 <code>mcp__&lt;server&gt;__*</code> 命名空间过滤；一台 Server 的工具一起显示或隐藏。</p>
+        </article>
+        <article class="card">
+          <div class="icon" aria-hidden="true">A</div>
+          <h3>子 Agent 只收窄</h3>
+          <p>子 Agent 的有效范围取工作区、父 Agent 和显式选择的交集，后代不会意外扩权。</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="docs">
+    <div class="wrap docs-grid">
+      <aside class="toc" aria-label="页内目录">
+        <strong>本页内容</strong>
+        <a href="#policy">策略语义</a>
+        <a href="#child-agent">子 Agent</a>
+        <a href="#panel">面板与状态</a>
+        <a href="#boundaries">边界与保证</a>
+      </aside>
+      <div>
+        <article class="doc-block" id="policy">
+          <span class="kicker">01 · Policy</span>
+          <h2>策略语义</h2>
+          <p>策略文件位于 <code>&lt;工作区&gt;/.dsh/skill-scope.yml</code>。文件不存在时保持标准行为：全部来源与 MCP Server 默认可用。</p>
+          <div class="codebox">
+            <div class="label"><span>Skill 判定顺序</span><span>优先 → 兜底</span></div>
+            <pre><code><span class="key">deny</span> → <span class="key">include</span> → <span class="key">allow</span>（非空时）→ 来源组开关</code></pre>
+          </div>
+          <p><code>mcpServers</code> 省略表示允许当前及以后连接的全部 Server；空数组表示隐藏全部 MCP 工具；名称数组表示只放行指定的完整 Server。</p>
+          <div class="note"><strong>粒度原则：</strong>插件刻意不提供单个 MCP 工具的开关。Server 是稳定、可理解的最小策略单元。</div>
+        </article>
+
+        <article class="doc-block" id="child-agent">
+          <span class="kicker">02 · Delegation</span>
+          <h2>子 Agent 作用域</h2>
+          <p><code>subagent_with_skills</code> 创建 spawn 子 Agent，并同时接受可选的 <code>skills</code> 与 <code>mcpServers</code>。最终范围遵循同一条规则：</p>
+          <div class="rule" aria-label="作用域交集规则">
+            <div class="rule-item">工作区可见</div><span class="rule-op" aria-hidden="true">∩</span>
+            <div class="rule-item">父 Agent 可见</div><span class="rule-op" aria-hidden="true">∩</span>
+            <div class="rule-item">显式选择</div>
+          </div>
+          <ul>
+            <li>省略参数：快照并继承父 Agent 当前可见范围；</li>
+            <li>传入 <code>[]</code>：对应类型不提供任何能力；</li>
+            <li>显式名称：任何未知或父级不可见名称都会拒绝整个请求。</li>
+          </ul>
+          <div class="note"><strong>安全边界：</strong>这是能力可见性限制，不是操作系统安全沙箱。能修改工作区策略文件的主体也能改变限制。</div>
+        </article>
+
+        <article class="doc-block" id="panel">
+          <span class="kicker">03 · Observability</span>
+          <h2>面板与运行状态</h2>
+          <p>从会话行 <strong>「⋯」→「工作区 Skill 与 MCP…」</strong> 打开清单。离线但已配置的 Server 会保留显示，避免保存其他设置时丢失策略。</p>
+          <div class="status">
+            <div><code>skillFilterInstalled</code><span>共享 Skill Filter 是否已安装</span></div>
+            <div><code>mcpFilterInstalled</code><span>共享 MCP Filter 是否完整安装</span></div>
+            <div><code>connected</code><span>该 Server 当前是否注册了工具</span></div>
+          </div>
+          <p>任何 Filter 未完整安装时，面板会显示独立警告，而不是静默宣称策略已生效。</p>
+        </article>
+
+        <article class="doc-block" id="boundaries">
+          <span class="kicker">04 · Operational notes</span>
+          <h2>边界与保证</h2>
+          <ul>
+            <li>工作区扫描异常时 fail-open，避免会话意外变成零 Skill；损坏的子 Agent 作用域记录 fail-closed。</li>
+            <li>MCP 包装安装具备完整回滚；不会留下只有部分工具读路径被过滤的状态。</li>
+            <li>策略先写入同目录临时文件，再通过 <code>rename</code> 替换；替换语义当前仅在 macOS 验证。</li>
+            <li>不访问外部服务、无遥测、无生命周期脚本；网络仅用于 DSH 自带 Web Server 的同源面板接口。</li>
+          </ul>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="install">
+    <div class="wrap">
+      <div class="install">
+        <div>
+          <span class="kicker">Installation</span>
+          <h2>安装到你的 DSH Profile</h2>
+          <p>安装后重启 DSH，然后从任意会话的菜单打开配置面板。</p>
+          <div class="codebox">
+            <div class="label"><span>Shell</span><span>GitHub source</span></div>
+            <pre><code>dsh plugin --profile &lt;profile&gt; add github:versot/dsh-workspace-skill-scope</code></pre>
+          </div>
+        </div>
+        <div class="version"><strong>v1.0.0</strong><span>Node ≥ 22.12.0</span></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap footer-row">
+    <span>MIT © 2026 versot · Built for DeepSeek Harness</span>
+    <div class="footer-links">
+      <a href="https://github.com/versot/dsh-workspace-skill-scope">GitHub</a>
+      <a href="https://github.com/versot/dsh-workspace-skill-scope#readme">README</a>
+      <a href="https://github.com/versot/dsh-workspace-skill-scope/blob/main/docs/VERIFICATION.md">验证记录</a>
+      <a href="https://raw.githubusercontent.com/versot/dsh-workspace-skill-scope/main/market/index.json">市场索引</a>
     </div>
   </div>
-
-  <p class="lede">
-    每个工作区一份 <code>.dsh/skill-scope.yml</code>，会话行菜单里勾选。<strong>对所有 preset 生效</strong>——标准 / PTC /
-    极简 / 创造，也包括插件安装之前就存在的老会话。
-  </p>
-
-  <h2>安装</h2>
-  <pre><code>dsh plugin --profile &lt;profile&gt; add github:versot/dsh-workspace-skill-scope</code></pre>
-  <p>重启 DSH 后，会话行「⋯」里出现「工作区 Skill…」。</p>
-
-  <h2>配置</h2>
-  <pre><code># &lt;工作区&gt;/.dsh/skill-scope.yml
-projectSkills: true    # 工作区 .dsh/skills、.agents/skills
-userSkills: false      # ~/.dsh/skills、~/.agents/skills
-bundled: true          # DSH 自带 skill
-allow: []              # 非空 = 白名单
-deny: []               # 精确排除
-include: []            # 整组关掉时仍保留的名字</code></pre>
-  <p>文件不存在 = 与标准模式一致，全部可用。改完即时生效，不用重启。</p>
-
-  <h2>怎么做的</h2>
-  <ul>
-    <li>Host 行提供面板的 JSON 接口，并包一层共享 <code>skills</code> 服务做过滤；</li>
-    <li>所以老会话、其他模式都跟着工作区走；</li>
-    <li>过滤失败一律 fail-open，不会把会话搞成零 skill。</li>
-  </ul>
-
-  <div class="links">
-    <a href="https://github.com/versot/dsh-workspace-skill-scope">GitHub</a>
-    <a href="https://github.com/versot/dsh-workspace-skill-scope#readme">README</a>
-    <a href="https://github.com/versot/dsh-workspace-skill-scope/blob/main/docs/VERIFICATION.md">验收记录</a>
-    <a href="https://raw.githubusercontent.com/versot/dsh-workspace-skill-scope/main/market/index.json">市场索引</a>
-  </div>
-
-  <footer>MIT © 2026 versot · 需要 DSH ≥ 0.2.1-rc.5</footer>
-</main>
+</footer>
 </body>
 </html>
