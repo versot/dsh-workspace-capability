@@ -55,11 +55,11 @@
       "versions": [
         {
           "version": "1.0.0",
-          "publishTimestamp": 1794900989,
+          "publishTimestamp": 1794902921,
           "source": {
             "type": "git",
             "url": "https://github.com/versot/dsh-workspace-capability.git",
-            "commit": "1771e769198bc3a372b987be1767f4559352e314"
+            "commit": "319b17d9b25258d52684b4a1123a0dba1be84aad"
           },
           "engines": {
             "dsh": ">=0.2.2-rc.3"
