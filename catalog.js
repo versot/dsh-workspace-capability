@@ -18,6 +18,7 @@ import { readdir, readFile, realpath, stat } from "node:fs/promises";
 import { homedir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { parse as parseYaml } from "yaml";
+import { MCP_SERVER_NAME_PATTERN } from "./mcp-scope.js";
 
 const PROVIDER_NAME = "workspace-scope";
 const PROJECT_DSH_RANK = 100;
@@ -38,6 +39,7 @@ const DEFAULT_CONFIG = Object.freeze({
   allow: Object.freeze([]),
   deny: Object.freeze([]),
   include: Object.freeze([]),
+  mcpServers: undefined,
 });
 
 /** Skill provider that maps workspace-configured local skill roots into `ctx.skills`. */
@@ -207,7 +209,7 @@ export async function readWorkspaceConfig(root, ctx) {
  * @returns {object} normalized policy.
  */
 export function normalizeConfig(input, path, ctx) {
-  const known = new Set(["projectSkills", "userSkills", "bundled", "allow", "deny", "include", "comment"]);
+  const known = new Set(["projectSkills", "userSkills", "bundled", "allow", "deny", "include", "mcpServers", "comment"]);
   for (const key of Object.keys(input)) {
     if (!known.has(key)) warn(ctx, `skill-scope: ${path} has unknown field "${key}"`);
   }
@@ -218,6 +220,7 @@ export function normalizeConfig(input, path, ctx) {
     allow: readNameList(input, "allow", path),
     deny: readNameList(input, "deny", path),
     include: readNameList(input, "include", path),
+    mcpServers: readMcpServerList(input, path),
   };
   return config;
 }
@@ -239,6 +242,22 @@ function readNameList(input, key, path) {
       throw new TypeError(`"${key}" contains an invalid skill name: ${JSON.stringify(item)}`);
     }
     names.push(item);
+  }
+  return names;
+}
+
+function readMcpServerList(input) {
+  if (!Object.hasOwn(input, "mcpServers")) return undefined;
+  const value = input.mcpServers;
+  if (!Array.isArray(value)) throw new TypeError('"mcpServers" must be a list of MCP server names');
+  const names = [];
+  const seen = new Set();
+  for (const item of value) {
+    if (typeof item !== "string" || !MCP_SERVER_NAME_PATTERN.test(item)) {
+      throw new TypeError(`"mcpServers" contains an invalid MCP server name: ${JSON.stringify(item)}`);
+    }
+    if (!seen.has(item)) names.push(item);
+    seen.add(item);
   }
   return names;
 }
