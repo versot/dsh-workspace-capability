@@ -24,7 +24,7 @@ check(pkg.dsh?.bundle?.patch === "./cordis.patch.yml", "dsh.bundle.patch must po
 check(typeof pkg.dsh?.client?.platform === "string", "dsh.client.platform is missing");
 check(typeof pkg.exports?.["./client"] === "string", "exports[./client] is missing");
 
-for (const file of ["index.js", "provider.js", "catalog.js", "client.js", "filter.js", "agent-scopes.js", "cordis.patch.yml"]) {
+for (const file of ["index.js", "provider.js", "catalog.js", "client.js", "filter.js", "agent-scopes.js", "mcp-scope.js", "cordis.patch.yml"]) {
   check(existsSync(file), `${file} is missing`);
   check(Array.isArray(pkg.files) && pkg.files.includes(file), `${file} is not in package.json "files"`);
 }
@@ -60,7 +60,7 @@ for (const version of entry?.versions ?? []) {
 }
 
 // Importing the modules is the cheapest way to catch a broken import graph.
-for (const module of ["../index.js", "../provider.js", "../catalog.js", "../filter.js", "../agent-scopes.js"]) {
+for (const module of ["../index.js", "../provider.js", "../catalog.js", "../filter.js", "../agent-scopes.js", "../mcp-scope.js"]) {
   try {
     await import(module);
   } catch (error) {

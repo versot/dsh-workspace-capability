@@ -436,6 +436,7 @@ export async function collectWorkspaceCatalog(workspace, ctx) {
       allow: [...config.allow],
       deny: [...config.deny],
       include: [...config.include],
+      ...config.mcpServers === undefined ? {} : { mcpServers: [...config.mcpServers] },
     },
     groups,
   };

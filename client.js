@@ -76,6 +76,7 @@ window.__ModuleLoader__.load({
         allow: [...(config.allow ?? [])],
         deny: [...(config.deny ?? [])],
         include: [...(config.include ?? [])],
+        mcpServers: config.mcpServers === undefined ? undefined : [...config.mcpServers],
       };
     }
 
@@ -87,6 +88,7 @@ window.__ModuleLoader__.load({
         allow: [...config.allow].sort(),
         deny: [...config.deny].sort(),
         include: [...config.include].sort(),
+        mcpServers: config.mcpServers === undefined ? undefined : [...config.mcpServers].sort(),
       });
     }
 
@@ -193,6 +195,20 @@ window.__ModuleLoader__.load({
       publish({ draft: next, saveError: undefined });
     }
 
+    function toggleMcpServer(name) {
+      const draft = snapshot.draft;
+      if (draft === undefined) return;
+      const allNames = (snapshot.data?.mcpServers ?? []).map((server) => server.name);
+      const selected = new Set(draft.mcpServers ?? allNames);
+      if (selected.has(name)) selected.delete(name);
+      else selected.add(name);
+      const nextNames = allNames.filter((server) => selected.has(server));
+      publish({
+        draft: { ...draft, mcpServers: nextNames.length === allNames.length ? undefined : nextNames },
+        saveError: undefined,
+      });
+    }
+
     async function savePanel() {
       const { data, draft, sessionId } = snapshot;
       if (data === undefined || draft === undefined || snapshot.saving) return;
@@ -229,7 +245,7 @@ window.__ModuleLoader__.load({
             void openPanel(sessionId);
           },
         },
-        '工作区 Skill…',
+        '工作区 Skill 与 MCP…',
       );
     }
 
@@ -413,6 +429,32 @@ window.__ModuleLoader__.load({
       );
     }
 
+    function mcpBlock(servers, draft) {
+      const allowed = new Set(draft.mcpServers ?? servers.map((server) => server.name));
+      return h(
+        'div',
+        { key: 'mcp-servers', style: styles.group },
+        h('div', { style: styles.groupHead },
+          h('span', { style: styles.groupLabel }, 'MCP Server'),
+          h('span', { style: styles.count }, `${allowed.size}/${servers.length} 可见`),
+        ),
+        servers.length === 0
+          ? h('div', { style: { ...styles.note, paddingLeft: 22 } }, '（当前没有已连接的 MCP Server）')
+          : servers.map((server) => h(
+              'label',
+              { key: server.name, style: styles.row },
+              h('input', {
+                type: 'checkbox',
+                style: { ...styles.checkbox, cursor: 'pointer' },
+                checked: allowed.has(server.name),
+                onChange: () => toggleMcpServer(server.name),
+              }),
+              h('span', { style: allowed.has(server.name) ? styles.name : styles.hiddenName }, server.name),
+              h('span', { style: styles.description }, `${server.toolCount} 个工具（整台 Server 一起控制）`),
+            )),
+      );
+    }
+
     function panelBody(state) {
       if (state.status === 'loading' || state.status === 'idle') {
         return h('div', { style: styles.note }, '正在读取目录…');
@@ -450,11 +492,13 @@ window.__ModuleLoader__.load({
             : null,
         ),
         ...data.groups.map((group) => groupBlock(group, draft)),
+        mcpBlock(data.mcpServers ?? [], draft),
         h(
           'div',
           { key: 'note', style: styles.note },
           h('span', {}, '勾选状态就是这个工作区会话能看到的 skill；全部勾上 = 不额外隐藏目录中的 skill。'),
           h('span', {}, '整组关掉后仍然可以单独勾选：那个 skill 会写进 include，别的照样隐藏。'),
+          h('span', {}, 'MCP 按整台 Server 控制：取消 comfyui 会隐藏并阻止所有 mcp__comfyui__* 工具，不提供单工具开关。'),
           h('span', {}, '保存后对这个工作区中的所有 preset 和已有会话生效；正在生成的回合不追溯修改，从下一次目录读取或模型请求开始使用新设置。'),
         ),
       ];
@@ -491,13 +535,13 @@ window.__ModuleLoader__.load({
             style: styles.card,
             role: 'dialog',
             'aria-modal': 'true',
-            'aria-label': '工作区 Skill',
+            'aria-label': '工作区 Skill 与 MCP',
             onClick: (event) => event.stopPropagation(),
           },
           h(
             'div',
             { style: styles.header },
-            h('h2', { style: styles.title }, '工作区 Skill'),
+            h('h2', { style: styles.title }, '工作区 Skill 与 MCP'),
             h('button', { type: 'button', style: styles.close, onClick: closePanel, 'aria-label': '关闭' }, '✕'),
           ),
           h('div', { style: styles.body }, panelBody(state)),

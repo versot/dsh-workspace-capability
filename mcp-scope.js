@@ -74,7 +74,8 @@ export function installMcpToolFilter(ctx, tools, agentScopes, policies) {
     tools.resolve = async function resolve(context) {
       const workspace = await policies?.policyFor?.(context.agent, context.signal)
         ?? policies?.policyForSync?.(context.agent);
-      const child = agentScopes?.getSync?.(context.agent);
+      const restoredChild = await agentScopes?.get?.(context.agent);
+      const child = restoredChild ?? agentScopes?.getSync?.(context.agent);
       const policy = { workspace, child };
       const resolved = await originals.resolve.call(this, context);
       return Object.freeze({

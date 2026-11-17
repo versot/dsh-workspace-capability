@@ -6,7 +6,7 @@
 
 <img src="icon.png" width="72" height="72" alt="">
 
-按工作区控制会话能看到哪些 skill：每个工作区一份 `.dsh/skill-scope.yml`，会话行菜单里勾选。
+按工作区控制会话能看到哪些 Skill 和整台 MCP Server：每个工作区一份 `.dsh/skill-scope.yml`，会话行菜单里勾选。
 **对所有 preset 生效**（标准 / PTC / 极简 / 创造），也包括插件安装之前就存在的老会话。
 
 ## 安装
@@ -31,12 +31,15 @@ bundled: true          # DSH 自带 skill
 allow: []              # 非空 = 只放行这些名字（白名单）
 deny: []               # 排除这些名字
 include: []            # 即使所属组关闭也保留的名字
+mcpServers: [comfyui]  # 可选；只放行整台 comfyui Server；省略 = 全部 MCP Server
 ```
 
 可见性顺序：`deny` → `include` → `allow`（非空时）→ 组开关。所以「用户级整组关掉、只留
 `prompt-optimizer`」就是 `userSkills: false` + `include: [prompt-optimizer]`。
 
-改文件不用重启：provider 每 1.5s 轮询签名，面板保存还会立刻失效一次。
+`mcpServers` 按 Server 名控制整个命名空间；`comfyui` 对应全部 `mcp__comfyui__*` 工具，不支持单个 MCP 工具开关。省略此字段时所有当前及以后新连接的 MCP Server 都默认可用；写 `[]` 时隐藏全部 MCP 工具。Skill-only 或 MCP-only 配置互不影响另一类能力。
+
+改文件不用重启：provider 每 1.5s 轮询签名，面板保存还会立刻失效一次。MCP 策略从下一次模型请求开始应用，不追溯正在执行的回合。
 
 ## 子 Agent 的 skill 白名单
 
@@ -53,7 +56,8 @@ include: []            # 即使所属组关闭也保留的名字
 - 省略 `skills`：继承父 Agent 当前可见的全部 skill；
 - `skills: []`：创建零 skill 的子 Agent；
 - 传入非空数组：仅暴露交集中的 skill；
-- 策略持久化到工作区的 `.dsh/agent-skill-scopes.json`。
+- `mcpServers` 同样可省略（继承）、传 `[]`（无 MCP）或传 Server 名数组；有效范围是 `工作区可见 ∩ 父 Agent 可见 ∩ 显式选择`；
+- 策略持久化到工作区的 `.dsh/agent-skill-scopes.json`，旧版 Skill-only 记录兼容并默认继承全部父级可见 MCP Server。
 
 这是对 spawn 子 Agent 的 **Skill 可见性限制**，不是安全沙箱或权限边界。它依赖工作区内的
 `.dsh/agent-skill-scopes.json`；能修改或删除该文件的主体也能破坏限制。`fork` 还可能从历史中继承已经加载的
@@ -61,7 +65,7 @@ skill 内容，因此也不能用作隔离手段。
 
 ## 面板
 
-会话行 **「⋯」→ 工作区 Skill…**：组与单项各一个勾选框，背后就是上面那份 YAML。保存会原子重写文件、
+会话行 **「⋯」→ 工作区 Skill 与 MCP…**：Skill 组/单项和每台 MCP Server 各有勾选框，背后就是上面那份 YAML。保存会原子重写文件、
 刷新已挂载的 provider，然后自动关闭面板。
 
 - 组关掉后仍可单独勾选某个 skill（写进 `include`）；

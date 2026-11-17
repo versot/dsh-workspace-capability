@@ -1,7 +1,7 @@
 {
   "name": "dsh-workspace-skill-scope",
   "version": "1.0.0",
-  "description": "Per-workspace skill visibility for DeepSeek Harness: one .dsh/skill-scope.yml plus a checklist panel in the session menu.",
+  "description": "Per-workspace Skill and whole-MCP-server visibility for DeepSeek Harness, with child-Agent scope narrowing.",
   "license": "MIT",
   "author": "versot",
   "homepage": "https://github.com/versot/dsh-workspace-skill-scope#readme",
@@ -16,6 +16,7 @@
     "dsh-plugin",
     "deepseek-harness",
     "skill",
+    "mcp",
     "workspace",
     "cordis"
   ],
@@ -25,6 +26,7 @@
     "./provider": "./provider.js",
     "./client": "./client.js",
     "./catalog": "./catalog.js",
+    "./mcp-scope": "./mcp-scope.js",
     "./locale/*.json": "./locale/*.json",
     "./icon": "./icon.png"
   },
@@ -35,13 +37,14 @@
     "client.js",
     "filter.js",
     "agent-scopes.js",
+    "mcp-scope.js",
     "cordis.patch.yml",
     "docs/*.md",
     "locale/*.json",
     "icon.png"
   ],
   "scripts": {
-    "test": "node scripts/check.mjs",
+    "test": "node --test test/*.test.mjs && node scripts/check.mjs",
     "pack": "npm pack"
   },
   "dependencies": {

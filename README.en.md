@@ -1,6 +1,6 @@
 # dsh-workspace-skill-scope
 
-Per-workspace skill visibility for [DeepSeek Harness](https://www.deepseek.com/harness/).
+Per-workspace Skill and whole-MCP-server visibility for [DeepSeek Harness](https://www.deepseek.com/harness/).
 
 Each workspace owns one `.dsh/skill-scope.yml`. Every session that runs in that
 workspace sees only the skills the file allows — regardless of which preset the
@@ -38,14 +38,21 @@ bundled: true          # skills shipped with DSH
 allow: []              # non-empty = whitelist: only these names
 deny: []               # hide these names
 include: []            # keep these names even when their group is switched off
+mcpServers: [comfyui]  # optional whole-server allowlist; omit = all MCP servers
 ```
 
 Visibility precedence: `deny` → `include` → `allow` (when non-empty) → the group
 switch. So "user-level off, but keep `prompt-optimizer`" is
 `userSkills: false` plus `include: [prompt-optimizer]`.
 
+`mcpServers` controls complete server namespaces: `comfyui` means every
+`mcp__comfyui__*` tool, never individual tools. Omit it to allow all current and
+future servers; use `[]` to expose no MCP tools. Skill-only and MCP-only files
+leave the other capability unrestricted.
+
 Edits apply without a restart: the provider polls the file every 1.5s and a panel
-save invalidates immediately, so the next model request sees the new catalog.
+save invalidates immediately. MCP changes apply on the next model request, not an
+already-running turn.
 
 ## Skill allowlists for child agents
 
@@ -65,7 +72,8 @@ never silently ignored.
 - omit `skills`: inherit every skill currently visible to the parent;
 - `skills: []`: create a child with zero skills;
 - pass a non-empty array: expose only the intersection above;
-- the policy is persisted in `.dsh/agent-skill-scopes.json` in the workspace.
+- optional `mcpServers` follows the same omit/inherit, `[]`/none, or server-name-list semantics; its effective scope is workspace-visible ∩ parent-visible ∩ selected;
+- the policy is persisted in `.dsh/agent-skill-scopes.json`; version-1 Skill-only records remain compatible and inherit parent-visible MCP servers.
 
 This is a **Skill-visibility restriction** for spawned child agents, not a
 security sandbox or permission boundary. It depends on the workspace-owned
@@ -75,8 +83,8 @@ conversation history and is not an isolation mechanism.
 
 ## Panel
 
-Session row **「⋯」→ 工作区 Skill…** opens a checklist: one checkbox per group and
-per skill, backed by the YAML above. Saving rewrites the file atomically, refreshes
+Session row **「⋯」→ 工作区 Skill 与 MCP…** opens a checklist: Skill groups/items
+and one checkbox per complete MCP server, backed by the YAML above. Saving rewrites the file atomically, refreshes
 the mounted providers, and closes the panel.
 
 ## How it works

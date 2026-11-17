@@ -100,7 +100,7 @@ async function handle(ctx, req, res) {
   if (rest === "catalog" && (req.method === "GET" || req.method === "HEAD")) {
     const workspace = resolveWorkspace(ctx, url.searchParams.get("session"), url.searchParams.get("workspace"));
     if (workspace === undefined) return sendNoWorkspace(res);
-    sendJson(res, 200, withFilterState(await collectWorkspaceCatalog(workspace, ctx)));
+    sendJson(res, 200, withFilterState(await collectWorkspaceCatalog(workspace, ctx), ctx));
     return;
   }
 
@@ -163,6 +163,7 @@ async function savePolicy(ctx, req, res) {
         allow: [...config.allow],
         deny: [...config.deny],
         include: [...config.include],
+        ...config.mcpServers === undefined ? {} : { mcpServers: [...config.mcpServers] },
       },
       { lineWidth: 0 },
     );
@@ -180,7 +181,7 @@ async function savePolicy(ctx, req, res) {
 
   // A save must be visible on the next model request, not on the poller's tick.
   invalidateWorkspaceProviders();
-  const catalog = withFilterState(await collectWorkspaceCatalog(workspace, ctx));
+  const catalog = withFilterState(await collectWorkspaceCatalog(workspace, ctx), ctx);
   sendJson(res, 200, catalog);
 
   // The shipped Client Skill picker caches one `skills/list` result per Session.
@@ -215,8 +216,22 @@ function createMcpPolicyResolver(ctx) {
 }
 
 /** Attach whether the every-session filter is live, so the panel can warn when it is not. */
-function withFilterState(catalog) {
-  return { ...catalog, filterInstalled: isSkillFilterActive() };
+function withFilterState(catalog, ctx) {
+  const servers = new Map();
+  for (const definition of ctx.tools?.definitions?.() ?? []) {
+    const match = /^mcp__([A-Za-z0-9_-]{1,32})__.+$/.exec(definition.name);
+    if (match === null) continue;
+    servers.set(match[1], (servers.get(match[1]) ?? 0) + 1);
+  }
+  return {
+    ...catalog,
+    mcpServers: [...servers].sort(([a], [b]) => a.localeCompare(b)).map(([name, toolCount]) => ({
+      name,
+      toolCount,
+      visible: catalog.config.mcpServers === undefined || catalog.config.mcpServers.includes(name),
+    })),
+    filterInstalled: isSkillFilterActive(),
+  };
 }
 
 function sendNoWorkspace(res) {
