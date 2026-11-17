@@ -511,7 +511,7 @@ window.__ModuleLoader__.load({
           { key: 'note', style: styles.note },
           h('span', {}, '勾选状态就是这个工作区会话能看到的 skill；全部勾上 = 不额外隐藏目录中的 skill。'),
           h('span', {}, '整组关掉后仍然可以单独勾选：那个 skill 会写进 include，别的照样隐藏。'),
-          h('span', {}, 'MCP 按整台 Server 控制：取消 comfyui 会隐藏并阻止所有 mcp__comfyui__* 工具，不提供单工具开关。'),
+          h('span', {}, 'MCP 按整台 Server 控制：取消某台 Server 会隐藏并阻止它的全部 mcp__<server>__* 工具，不提供单工具开关。'),
           h('span', {}, '保存后对这个工作区中的所有 preset 和已有会话生效；正在生成的回合不追溯修改，从下一次目录读取或模型请求开始使用新设置。'),
         ),
       ];

@@ -28,16 +28,16 @@ dsh plugin --profile <profile> add github:versot/dsh-workspace-capability
 projectSkills: true    # <工作区>/.dsh/skills、<工作区>/.agents/skills
 userSkills: false      # ~/.dsh/skills、~/.agents/skills
 bundled: true          # DSH 自带 skill
-allow: []              # 非空 = 只放行这些名字（白名单）
-deny: []               # 排除这些名字
-include: []            # 即使所属组关闭也保留的名字
-mcpServers: [comfyui]  # 可选；只放行整台 comfyui Server；省略 = 全部 MCP Server
+allow: []              # 非空 = 只放行这些 <skill-name>（白名单）
+deny: []               # 排除这些 <skill-name>
+include: []            # 即使所属组关闭也保留这些 <skill-name>
+mcpServers: [<server-name>]  # 只放行这台 Server；省略 = 全部 MCP Server
 ```
 
-可见性顺序：`deny` → `include` → `allow`（非空时）→ 组开关。所以「用户级整组关掉、只留
-`prompt-optimizer`」就是 `userSkills: false` + `include: [prompt-optimizer]`。
+可见性顺序：`deny` → `include` → `allow`（非空时）→ 组开关。所以「用户级整组关掉、但单独留某一个」就是
+`userSkills: false` + `include: [<skill-name>]`。
 
-`mcpServers` 按 Server 名控制整个命名空间；`comfyui` 对应全部 `mcp__comfyui__*` 工具，不支持单个 MCP 工具开关。省略此字段时所有当前及以后新连接的 MCP Server 都默认可用；写 `[]` 时隐藏全部 MCP 工具。Skill-only 或 MCP-only 配置互不影响另一类能力。
+`mcpServers` 按 Server 名控制整个命名空间；`<server-name>` 对应全部 `mcp__<server-name>__*` 工具，不支持单个 MCP 工具开关。省略此字段时所有当前及以后新连接的 MCP Server 都默认可用；写 `[]` 时隐藏全部 MCP 工具。Skill-only 或 MCP-only 配置互不影响另一类能力。
 
 改文件不用重启：provider 每 1.5s 轮询签名，面板保存还会立刻失效一次。MCP 策略从下一次模型请求开始应用，不追溯正在执行的回合。
 

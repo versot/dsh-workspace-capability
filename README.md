@@ -39,19 +39,19 @@ stock Standard preset", i.e. every skill is available:
 projectSkills: true    # <workspace>/.dsh/skills and <workspace>/.agents/skills
 userSkills: false      # ~/.dsh/skills and ~/.agents/skills
 bundled: true          # skills shipped with DSH
-allow: []              # non-empty = whitelist: only these names
-deny: []               # hide these names
-include: []            # keep these names even when their group is switched off
-mcpServers: [comfyui]  # optional whole-server allowlist; omit = all MCP servers
+allow: []              # non-empty = allowlist: only these <skill-name> values
+deny: []               # hide these <skill-name> values
+include: []            # keep these <skill-name> values even when the group is off
+mcpServers: [<server-name>]  # whole-server allowlist; omit = every MCP server
 ```
 
 Visibility precedence: `deny` → `include` → `allow` (when non-empty) → the group
-switch. So "user-level off, but keep `prompt-optimizer`" is
-`userSkills: false` plus `include: [prompt-optimizer]`.
+switch. So "user-level off, but keep one skill anyway" is
+`userSkills: false` plus `include: [<skill-name>]`.
 
-`mcpServers` controls complete server namespaces: `comfyui` means every
-`mcp__comfyui__*` tool, never individual tools. Omit it to allow all current and
-future servers; use `[]` to expose no MCP tools. Skill-only and MCP-only files
+`mcpServers` controls complete server namespaces: `<server-name>` means every
+`mcp__<server-name>__*` tool, never individual tools. Omit it to allow all current
+and future servers; use `[]` to expose no MCP tools. Skill-only and MCP-only files
 leave the other capability unrestricted.
 
 Edits apply without a restart: the provider polls the file every 1.5s and a panel
