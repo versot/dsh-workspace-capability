@@ -8,8 +8,9 @@
 | `filter.js` | 包一层共享 `skills` 服务（`list`/`snapshot`/`get`），让 Skill 策略对所有 preset 生效；状态通过 `skillFilterInstalled` 报告给面板，`filterInstalled` 仅作旧客户端兼容别名 |
 | `mcp-scope.js` | 按 `mcp__<server>__<tool>` 整台过滤共享工具服务的读路径与 resolved tool set；安装过程事务式回滚，状态通过 `mcpFilterInstalled` 单独报告 |
 | `agent-scopes.js` | 持久化子 Agent 的 Skill/MCP 范围并注册 `subagent_with_skills`；省略 MCP 参数时快照父 Agent 当前可见 Server，保证后代范围不扩大 |
+| `roles.js` | 读取 `<工作区>/.dsh/agents/*.md` 能力预设目录（只读取 frontmatter 的推荐场景与 Skill/MCP 默认值，忽略正文），并注册 `list_subagent_roles`；退出名册的坏文件通过 `problems` 回报而不是静默丢弃 |
 | `provider.js` | preset 半侧（`./provider`）：注册 `WorkspaceScopeProvider`。**当前没有行引用它**——preset 声明已删除，保留是为了将来想恢复「某个模式自带 provider」时不用重写 |
-| `index.js` | Host 半侧（包根）：注册 `/dsh-workspace-capability` 路由、安装 `filter.js`。必须挂在**裸包名**那一行——`client-modules` 只扫裸包名的 active row 来发现 `./client` |
+| `index.js` | Host 半侧（包根）：注册 `/dsh-workspace-capability` 路由、安装 `filter.js`；不监听 `agent/created`，不注入系统提示词。必须挂在**裸包名**那一行——`client-modules` 只扫裸包名的 active row 来发现 `./client` |
 | `client.js` | 浏览器半侧：会话行「⋯」菜单项 + 面板（`shell.overlay` 自绘浮层，不用 `Modal` 的固定窄宽） |
 | `cordis.patch.yml` | bundle 层：只插入一行 Host 行 `workspace-capability-host`；不声明 preset，也不改默认 preset |
 | `market/index.json` | 应用内插件市场的索引条目（format 1） |

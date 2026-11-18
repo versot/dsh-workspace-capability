@@ -29,6 +29,9 @@ import {
 import { installSkillFilter, isSkillFilterActive } from "./filter.js";
 import { installMcpToolFilter, isMcpToolFilterActive } from "./mcp-scope.js";
 import { AgentSkillScopes, installSkilledSubagentTool } from "./agent-scopes.js";
+import { installRoleCatalogTool, listRoles, parseRole, rolesDirectory, ROLE_NAME } from "./roles.js";
+import { lstat } from "node:fs/promises";
+import { randomUUID } from 'node:crypto';
 
 export const name = "workspace-capability-host";
 
@@ -68,6 +71,10 @@ export function apply(ctx) {
       () => installSkilledSubagentTool(toolCtx, agentScopes),
       "workspace-capability: skilled subagent tool",
     );
+    toolCtx.effect(
+      () => installRoleCatalogTool(toolCtx),
+      "workspace-capability: role catalog tool",
+    );
   });
 
   // Lazy: a headless or minimal composition has no webServer, and a top-level
@@ -101,6 +108,11 @@ async function handle(ctx, req, res) {
     const workspace = resolveWorkspace(ctx, url.searchParams.get("session"), url.searchParams.get("workspace"));
     if (workspace === undefined) return sendNoWorkspace(res);
     sendJson(res, 200, withFilterState(await collectWorkspaceCatalog(workspace, ctx), ctx));
+    return;
+  }
+
+  if (rest === "roles") {
+    await handleRoles(ctx, req, res, url);
     return;
   }
 
@@ -192,6 +204,50 @@ async function savePolicy(ctx, req, res) {
   ctx.emit("plugin-manager/changed", { reason: "plugin" });
 }
 
+/** Serve workspace capability preset CRUD without contributing prompt text. */
+async function handleRoles(ctx, req, res, url) {
+  if (!["GET", "POST", "DELETE"].includes(req.method)) {
+    return sendJson(res, 405, { error: { message: "use GET, POST or DELETE" } });
+  }
+  let body = {};
+  try {
+    if (req.method !== "GET") body = JSON.parse(await readBody(req));
+    if (!body || typeof body !== "object" || Array.isArray(body)) throw new Error("body must be an object");
+  } catch (error) {
+    return sendJson(res, 400, { error: { message: messageOf(error) } });
+  }
+  const workspace = resolveWorkspace(ctx, body.session ?? url.searchParams.get("session"), body.workspace ?? url.searchParams.get("workspace"));
+  if (workspace === undefined) return sendNoWorkspace(res);
+  const root = await findWorkspaceRoot(workspace);
+  if (req.method === "GET") return sendJson(res, 200, await listRoles(root));
+  const name = req.method === "POST" ? (body.preset?.name ?? (body.create === true ? `preset-${randomUUID()}` : undefined)) : body.name;
+  if (typeof name !== "string" || !ROLE_NAME.test(name)) return sendJson(res, 400, { error: { message: "invalid preset name" } });
+  const directory = rolesDirectory(root);
+  const file = join(directory, `${name}.md`);
+  try {
+    const dir = await lstat(directory).catch((e) => { if (e.code !== "ENOENT") throw e; });
+    if (dir && (!dir.isDirectory() || dir.isSymbolicLink())) throw new Error("preset directory must be a real directory");
+    const existing = await lstat(file).catch((e) => { if (e.code !== "ENOENT") throw e; });
+    if (existing && (!existing.isFile() || existing.isSymbolicLink())) throw new Error("preset must be a regular file");
+    if (req.method === "DELETE") {
+      if (!existing) return sendJson(res, 404, { error: { message: "preset not found" } });
+      // name is validated above; file is exactly the selected workspace preset.
+      await unlink(file);
+    } else {
+      const text = `---\n${stringify(body.preset, { lineWidth: 0 })}---\n`;
+      const preset = parseRole(name, text);
+      if (body.create && existing) return sendJson(res, 409, { error: { message: "a preset with this name already exists" } });
+      if (!body.create && !existing) return sendJson(res, 404, { error: { message: "preset not found; create a new preset instead" } });
+      await mkdir(directory, { recursive: true });
+      const { name: _name, id: _id, ...metadata } = preset;
+      await writeFile(file, `---\n${stringify(metadata, { lineWidth: 0 })}---\n`, { mode: 0o600, flag: body.create ? "wx" : "w" });
+    }
+    return sendJson(res, 200, { ...await listRoles(root), ...(req.method === 'POST' ? { savedId: name } : {}) });
+  } catch (error) {
+    return sendJson(res, error.code === "EEXIST" ? 409 : 400, { error: { message: messageOf(error) } });
+  }
+}
+
 function createMcpPolicyResolver(ctx) {
   const cache = new WeakMap();
   return {
@@ -218,10 +274,16 @@ function createMcpPolicyResolver(ctx) {
 /** Attach whether the every-session filter is live, so the panel can warn when it is not. */
 export function withFilterState(catalog, ctx) {
   const servers = new Map();
+  const serverTools = new Map();
   for (const definition of ctx.tools?.definitions?.() ?? []) {
     const match = /^mcp__([A-Za-z0-9_-]{1,32})__.+$/.exec(definition.name);
     if (match === null) continue;
     servers.set(match[1], (servers.get(match[1]) ?? 0) + 1);
+    if (!serverTools.has(match[1])) serverTools.set(match[1], []);
+    serverTools.get(match[1]).push({
+      name: definition.name.slice(`mcp__${match[1]}__`.length),
+      description: typeof definition.description === 'string' ? definition.description : '',
+    });
   }
   for (const name of catalog.config.mcpServers ?? []) {
     if (!servers.has(name)) servers.set(name, 0);
@@ -232,6 +294,7 @@ export function withFilterState(catalog, ctx) {
     mcpServers: [...servers].sort(([a], [b]) => a.localeCompare(b)).map(([name, toolCount]) => ({
       name,
       toolCount,
+      tools: serverTools.get(name) ?? [],
       connected: toolCount > 0,
       visible: catalog.config.mcpServers === undefined || catalog.config.mcpServers.includes(name),
     })),

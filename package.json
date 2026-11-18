@@ -26,6 +26,7 @@
     "./provider": "./provider.js",
     "./client": "./client.js",
     "./catalog": "./catalog.js",
+    "./roles": "./roles.js",
     "./mcp-scope": "./mcp-scope.js",
     "./locale/*.json": "./locale/*.json",
     "./icon": "./icon.png"
@@ -37,6 +38,7 @@
     "client.js",
     "filter.js",
     "agent-scopes.js",
+    "roles.js",
     "mcp-scope.js",
     "cordis.patch.yml",
     "docs/*.md",

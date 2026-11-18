@@ -109,6 +109,26 @@ dsh plugin --profile web remove dsh-workspace-capability
 验证白名单交集时，应同时确认未列出的可见 skill 没有进入子 Agent，列出但隐藏的名称触发拒绝，以及持久化
 文件与实际生效范围一致。以上各项在记录真实观察结果前都属于待执行项目，而不是通过证据。
 
+## 5. 能力预设（待执行验收矩阵）
+
+能力预设目录为 `<工作区>/.dsh/agents/<role-name>.md`。角色只提供**默认值**，最终范围仍是
+`工作区可见 ∩ 父 Agent 可见 ∩ 选择`，因此本节每一项都不能读成安全边界。
+
+| 用例 | 输入 | 预期 |
+| --- | --- | --- |
+| 名册 | 放置一个合法角色文件后调用 `list_subagent_roles` | 返回该角色的 `name` / `description`，以及 `skills`、`mcpServers`（若声明） |
+| 坏文件可见 | 放置一个缺少 `description` 或 YAML 非法的角色文件 | 该文件出现在 `problems` 里，其他角色仍可用，不静默消失 |
+| 默认值生效 | `subagent_with_skills` 传 `role: <name>`、省略 `skills`/`mcpServers` | 子 Agent 范围等于角色声明的名单 |
+| 显式覆盖 | 同时传 `role` 与 `skills: []` | 显式参数优先，子 Agent 无 skill |
+| 不扩大 | 角色声明父 Agent 当前不可见的名称 | 请求被拒绝，不创建子 Agent |
+| 未知角色 | `role: <不存在的名称>` | 请求被拒绝并指出缺少哪个文件 |
+| 不注入指令 | 完成一次带 `role` 的 spawn | 只传入父 Agent 编写的任务 `prompt`；预设 description 和正文不自动传入任务或系统提示词 |
+| 父级不受影响 | 同上 | 父 Agent 未获得角色的 Skill/MCP 限制 |
+| 重启恢复 | 带 `role` spawn 后重启 DSH，恢复该子 Agent | 可见性策略仍从 `.dsh/agent-scopes.json` 恢复；不存在需要恢复的角色提示词段 |
+
+无正文的预设应正常使用；已有 Markdown 正文应忽略。description 仅用于父 Agent 选择能力预设，
+具体任务仍由父 Agent 编写；不新增、替换或恢复任何系统提示词段。
+
 ## 覆盖范围与未覆盖项
 
 已覆盖：
@@ -121,4 +141,5 @@ dsh plugin --profile web remove dsh-workspace-capability
 - Windows / Linux。
 - Desktop 面板里的图标、菜单项与保存交互（需真人点击）。
 - 第 4 节的子 Agent 可见性、重启恢复、存储丢失/损坏、后代、不同 cwd 与普通 spawn/fork 矩阵。
+- 第 5 节的能力预设矩阵（含 description 与正文不自动传入子 Agent）。
 - 真实用户 Profile 的升级路径。

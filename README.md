@@ -85,7 +85,53 @@ security sandbox or permission boundary. It depends on the workspace-owned
 break the restriction. Fork may also retain already-loaded Skill content from
 conversation history and is not an isolation mechanism.
 
+## Capability presets
+
+Each `<workspace>/.dsh/agents/<name>.md` file defines a capability preset and
+recommended scenarios for the parent agent:
+
+```markdown
+---
+description: Suitable for GitHub Issue investigation and PR change analysis.
+skills: [<skill-name>]
+mcpServers: [<server-name>]
+---
+```
+
+Replace the placeholders with names visible to the parent.
+
+- `description` is required. It helps the **parent** choose a preset; it is not
+  automatically sent to the child as a task or system prompt.
+- `skills` and `mcpServers` supply defaults: omit to inherit parent visibility,
+  use `[]` for none, or list names to select them. Explicit tool arguments override
+  these defaults; selections cannot exceed workspace/parent visibility.
+- No body is required. Any Markdown body is ignored, including in older files.
+- The plugin does not inject system prompts. The parent writes the complete task
+  in `prompt`; DSH retains its normal child composition and system prompt.
+
+`list_subagent_roles` lists presets, their recommended scenarios and parse
+problems. Pass the chosen name as `role` to `subagent_with_skills` alongside the
+actual task. The directory and tool/parameter names remain unchanged for
+compatibility; “role” now means a capability preset, not a persona.
+These presets do not restrict native tools such as Bash and are not a sandbox.
+
 ## Panel
+
+Use the same Session menu entry **Workspace capability scope…**. The panel has
+Workspace scope and Capability presets tabs. The latter provides a preset list
+and editor with create, edit, delete, name and recommended-scenario fields.
+Display names (`displayName`) support Chinese and renaming (1–100 trimmed characters,
+no control characters). New presets receive an automatic stable identifier; renaming
+never changes that identifier or file. Legacy files without `displayName` display
+their existing file stem, without migration. Catalog entries expose `id`, legacy
+`name` (both are the callable file-stem identifier), and `displayName`; pass `id`
+as the `role` argument, not the display name. Disabled save actions show a reason.
+Skill and MCP each offer Inherit parent / None / Custom modes; unavailable saved
+selections remain visible with warnings. Internal identifiers cannot be changed after saving; display names can.
+No role body or system-prompt editor is provided. Unsaved preset changes and
+preset deletion require confirmation. Preset saves are independent of workspace
+policy saves and keep the editor open. The panel uses DSH theme tokens and
+switches to a single-column layout on narrow screens.
 
 Session row **「⋯」→ 工作区能力范围…** opens a checklist: Skill groups/items
 and one checkbox per complete MCP server, backed by the YAML above. Policies are written to a same-directory temporary file and then replaced with `rename`; replacement semantics have currently been verified only on macOS. Saving also refreshes the mounted providers and closes the panel. Configured servers that are currently disconnected remain listed as offline, so unrelated saves do not discard them. The API and panel report `skillFilterInstalled` and `mcpFilterInstalled` separately; `filterInstalled` remains a compatibility alias for the Skill filter.
@@ -103,6 +149,9 @@ Two rows, one bundle:
   its preset at creation and never re-evaluates it.
 - `provider.js` and `catalog.js` hold the scanner and a real skill provider; the
   provider is not mounted by default (no preset is declared).
+- `agent-scopes.js` owns the durable child allowlists and the
+  `subagent_with_skills` tool; `roles.js` reads the workspace role directory and
+  registers `list_subagent_roles`.
 
 ## Permissions and external services
 
@@ -111,7 +160,7 @@ marketplace's elevated-capability tier (`user-reviewed`):
 
 | Capability | Used for | Bound |
 | --- | --- | --- |
-| Read files | scanning `<workspace>/.dsh/skills`, `<workspace>/.agents/skills`, `~/.dsh/skills`, `~/.agents/skills`, the bundled directory | reads `SKILL.md` frontmatter only |
+| Read files | scanning `<workspace>/.dsh/skills`, `<workspace>/.agents/skills`, `~/.dsh/skills`, `~/.agents/skills`, the bundled directory, and `<workspace>/.dsh/agents/*.md` | reads `SKILL.md` frontmatter and role files only |
 | Write files | `<workspace>/.dsh/capability-scope.yml` and `.dsh/agent-scopes.json` | same-directory temporary file followed by `rename`; invalid requests do not write; replacement semantics are currently verified only on macOS |
 | Network | one same-origin prefix `/dsh-workspace-capability` on DSH's own `webServer`; the browser half fetches it | no outbound requests, no telemetry |
 | Session data | session id → workspace path via `workspaceRegistry` (fallback `sessions.get(id).header.cwd`) | read-only, never stored or sent; no credentials, cookies or tokens |

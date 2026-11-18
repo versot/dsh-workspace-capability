@@ -4,6 +4,7 @@ import { mkdir, readFile, rename, unlink, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { findWorkspaceRoot } from "./catalog.js";
 import { MCP_SERVER_NAME_PATTERN, parseMcpToolName } from "./mcp-scope.js";
+import { readRole } from "./roles.js";
 
 const STORE_SEGMENTS = [".dsh", "agent-scopes.json"];
 const SKILL_NAME = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -106,7 +107,7 @@ export class AgentSkillScopes {
 export function installSkilledSubagentTool(ctx, scopes) {
   const definition = {
     name: "subagent_with_skills",
-    description: "Start an independent spawn subagent with a Skill visibility allowlist. Omit skills to inherit the parent's current catalog; pass [] for no Skills. This workspace-backed restriction is not a security sandbox, and fork may retain Skill content from conversation history.",
+    description: "Start an independent spawn subagent with a Skill visibility allowlist. Omit skills to inherit the parent's current catalog; pass [] for no Skills. A `role` selects a capability preset under .dsh/agents/ with Skill/MCP defaults. Its description recommends when the parent should select it; it is not sent to the child. The parent supplies the complete task prompt; no system prompt is injected. This workspace-backed restriction is not a security sandbox, and fork may retain Skill content from conversation history.",
     parameters: {
       type: "object",
       additionalProperties: false,
@@ -116,15 +117,19 @@ export function installSkilledSubagentTool(ctx, scopes) {
         description: { type: "string", description: "A short 3-5 word task description." },
         name: { type: "string", description: "Optional unique short child name." },
         prompt: { type: "string", description: "The complete self-contained task for the child." },
+        role: {
+          type: "string",
+          description: "Name of a capability preset in .dsh/agents/. Supplies Skill/MCP defaults only, not child instructions; omit for an ad-hoc child.",
+        },
         skills: {
           type: "array",
           items: { type: "string" },
-          description: "Exact Skill names the child may use. Omit to inherit; [] allows no Skills.",
+          description: "Exact Skill names the child may use. Omit to inherit (or to use the role default); [] allows no Skills.",
         },
         mcpServers: {
           type: "array",
           items: { type: "string" },
-          description: "Exact whole MCP server names the child may use. Omit to inherit; [] allows no MCP tools.",
+          description: "Exact whole MCP server names the child may use. Omit to inherit (or to use the role default); [] allows no MCP tools.",
         },
       },
     },
@@ -147,11 +152,13 @@ export function installSkilledSubagentTool(ctx, scopes) {
       if (!parent) throw new Error("subagent_with_skills requires a calling Agent");
       const parentCwd = await ctx.workingDirectory.ensure(parent, exec.signal);
       const cwd = args.cwd === undefined ? parentCwd : resolve(parentCwd, args.cwd);
+      const role = args.role === undefined ? undefined : await readRole(await findWorkspaceRoot(cwd), args.role);
       const visible = await ctx.skills.list({ cwd: parentCwd, scope: parent, signal: exec.signal });
       const visibleNames = new Set(visible.map((skill) => skill.name));
-      const selected = args.skills === undefined
+      const requestedSkills = args.skills === undefined ? role?.skills : args.skills;
+      const selected = requestedSkills === undefined
         ? Object.freeze([...visibleNames])
-        : validateRequested(args.skills);
+        : validateRequested(requestedSkills);
       const unavailable = selected.filter((name) => !visibleNames.has(name));
       if (unavailable.length > 0) {
         throw new Error(`Skills are unknown or hidden by the workspace/parent policy: ${unavailable.join(", ")}`);
@@ -160,9 +167,10 @@ export function installSkilledSubagentTool(ctx, scopes) {
         const parsed = parseMcpToolName(tool.name);
         return parsed === undefined ? [] : [parsed.serverName];
       }));
-      const selectedMcpServers = args.mcpServers === undefined
+      const requestedMcpServers = args.mcpServers === undefined ? role?.mcpServers : args.mcpServers;
+      const selectedMcpServers = requestedMcpServers === undefined
         ? Object.freeze([...visibleMcpServers])
-        : validateMcpServers(args.mcpServers);
+        : validateMcpServers(requestedMcpServers);
       const unavailableMcp = selectedMcpServers.filter((server) => !visibleMcpServers.has(server));
       if (unavailableMcp.length > 0) {
         throw new Error(`MCP servers are unknown or hidden by the workspace/parent policy: ${unavailableMcp.join(", ")}`);

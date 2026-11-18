@@ -21,8 +21,8 @@ test("catalog preserves configured MCP servers that are currently offline", () =
   };
   const result = withFilterState(catalog(["time", "github"]), ctx);
   assert.deepEqual(result.mcpServers, [
-    { name: "github", toolCount: 0, connected: false, visible: true },
-    { name: "time", toolCount: 2, connected: true, visible: true },
+    { name: "github", toolCount: 0, tools: [], connected: false, visible: true },
+    { name: "time", toolCount: 2, tools: [{ name: 'now', description: '' }, { name: 'convert', description: '' }], connected: true, visible: true },
   ]);
   assert.equal(typeof result.skillFilterInstalled, "boolean");
   assert.equal(typeof result.mcpFilterInstalled, "boolean");
